@@ -498,7 +498,7 @@ export default function TranscriptionDashboard() {
           input: {
             audio: base64Audio,
             file_extension: fileExtension,
-            hf_token: process.env.NEXT_PUBLIC_HF_TOKEN || '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',
+            hf_token: process.env.NEXT_PUBLIC_HF_TOKEN,
             take_notes: takeNotes
           }
         })
