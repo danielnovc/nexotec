@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { Mic, MicOff, Download, Sparkles, Clock, FileText, Loader2, Play, Square } from "lucide-react"
+import { Mic, MicOff, Download, Sparkles, Clock, FileText, Loader2, Play, Square, Copy, Sun, Moon, CreditCard } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -16,6 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { AppSidebar } from "@/components/app-sidebar"
+import { Loader } from "@/components/ui/loader"
+import { toast } from "sonner"
+import { SupabaseConnectModal } from "@/components/supabase-connect-modal"
+import { useAuth } from "@/contexts/AuthContext"
+import { useCredits } from "@/hooks/useCredits"
+import { supabase } from "@/lib/supabase"
 
 interface Transcription {
   id: string;
@@ -24,6 +31,8 @@ interface Transcription {
   startTime?: number;
   endTime?: number;
   speaker?: string;
+  start?: number;
+  end?: number;
 }
 
 interface MediaRecorderState {
@@ -52,7 +61,22 @@ interface Language {
   code: string;
 }
 
+// Add a color palette for speaker dots
+const SPEAKER_COLORS = [
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-purple-500',
+  'bg-pink-500',
+  'bg-yellow-500',
+  'bg-red-500',
+  'bg-teal-500',
+  'bg-orange-500',
+];
+
 export default function TranscriptionDashboard() {
+  const { user } = useAuth()
+  const { credits, loading: creditsLoading, deductCredits, estimateCost, hasEnoughCredits } = useCredits()
+  
   const [isRecording, setIsRecording] = useState(false)
   const [transcription, setTranscription] = useState<Transcription[]>([])
   const [currentText, setCurrentText] = useState("")
@@ -75,6 +99,64 @@ export default function TranscriptionDashboard() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Theme toggle state
+  const [isDark, setIsDark] = useState(false);
+  const [autoDownloadRecordings, setAutoDownloadRecordings] = useState(false)
+  const [saveTranscripts, setSaveTranscripts] = useState(false)
+  const [autoDownloadTranscripts, setAutoDownloadTranscripts] = useState(false)
+  const [autoSummarize, setAutoSummarize] = useState(false)
+  const [moreThanTwoSpeakers, setMoreThanTwoSpeakers] = useState(false)
+  const [isConnectingSupabase, setIsConnectingSupabase] = useState(false)
+  const [supabaseModalOpen, setSupabaseModalOpen] = useState(false)
+  const [takeNotes, setTakeNotes] = useState(false)
+
+  // Load toggle states from localStorage on mount
+  useEffect(() => {
+    setAutoDownloadRecordings(localStorage.getItem("autoDownloadRecordings") === "true")
+    setSaveTranscripts(localStorage.getItem("saveTranscripts") === "true")
+    setAutoDownloadTranscripts(localStorage.getItem("autoDownloadTranscripts") === "true")
+    setAutoSummarize(localStorage.getItem("autoSummarize") === "true")
+    setMoreThanTwoSpeakers(localStorage.getItem("moreThanTwoSpeakers") === "true")
+  }, [])
+
+  // Persist toggle states to localStorage
+  useEffect(() => {
+    localStorage.setItem("autoDownloadRecordings", String(autoDownloadRecordings))
+  }, [autoDownloadRecordings])
+  useEffect(() => {
+    localStorage.setItem("saveTranscripts", String(saveTranscripts))
+  }, [saveTranscripts])
+  useEffect(() => {
+    localStorage.setItem("autoDownloadTranscripts", String(autoDownloadTranscripts))
+  }, [autoDownloadTranscripts])
+  useEffect(() => {
+    localStorage.setItem("autoSummarize", String(autoSummarize))
+  }, [autoSummarize])
+  useEffect(() => {
+    localStorage.setItem("moreThanTwoSpeakers", String(moreThanTwoSpeakers))
+  }, [moreThanTwoSpeakers])
+
+  useEffect(() => {
+    // On mount, set initial theme
+    const isDarkMode =
+      typeof window !== "undefined" &&
+      (localStorage.getItem("theme") === "dark" ||
+        (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches));
+    setIsDark(isDarkMode);
+  }, []);
+  const toggleTheme = () => {
+    const html = document.documentElement;
+    if (html.classList.contains("dark")) {
+      html.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+      setIsDark(false);
+    } else {
+      html.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+      setIsDark(true);
+    }
+  };
 
   useEffect(() => {
     // Only run browser-specific code on client side after mount
@@ -213,6 +295,21 @@ export default function TranscriptionDashboard() {
   };
 
   const startRecording = async () => {
+    // Check if user is authenticated
+    // if (!user) {
+    //   toast.error("Please sign in to use transcription services");
+    //   return;
+    // }
+
+    // Estimate recording duration and check credits
+    // const estimatedDuration = 300; // 5 minutes estimate
+    // const estimatedCost = estimateCost(estimatedDuration);
+    
+    // if (!hasEnoughCredits(estimatedDuration)) {
+    //   toast.error(`Insufficient credits. Need ${estimatedCost.toFixed(2)} credits, have ${credits.toFixed(2)}.`);
+    //   return;
+    // }
+
     try {
       console.log('Starting recording...');
       setTranscription([]);
@@ -236,20 +333,10 @@ export default function TranscriptionDashboard() {
       const processor = audioContext.createScriptProcessor(16384, 1, 1);
       
       const audioChunks: Float32Array[] = [];
-      let totalSamples = 0;
-      const MAX_SAMPLES = 16000 * 30; // 30 seconds of audio at 16kHz
       
       processor.onaudioprocess = (e) => {
         const inputData = e.inputBuffer.getChannelData(0);
-        totalSamples += inputData.length;
-        
-        // Only store chunks if we haven't exceeded the maximum
-        if (totalSamples <= MAX_SAMPLES) {
-          audioChunks.push(new Float32Array(inputData));
-        } else {
-          console.warn('Maximum recording length reached');
-          stopRecording();
-        }
+        audioChunks.push(new Float32Array(inputData));
       };
       
       source.connect(processor);
@@ -370,16 +457,51 @@ export default function TranscriptionDashboard() {
     }
   };
 
+  // Add a utility function to convert blob to base64
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data URL prefix (e.g., "data:audio/wav;base64,")
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const processRecording = async (audioBlob: Blob) => {
     setIsProcessing(true);
     setError(null);
     try {
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'recording.webm');
-      console.log('Sending audio file for transcription, size:', audioBlob.size);
-      const response = await fetch('http://localhost:8000/process-audio', {
+      // Convert audio blob to base64
+      const base64Audio = await blobToBase64(audioBlob);
+      
+      // Get file extension from blob
+      const fileExtension = audioBlob.type.split('/')[1] || 'wav';
+      
+      console.log('Sending audio to RunPod, size:', audioBlob.size);
+      
+      // TODO: Replace with your actual RunPod endpoint URL and API key
+      const RUNPOD_ENDPOINT = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'https://your-runpod-endpoint.runpod.net/run';
+      const RUNPOD_API_KEY = process.env.NEXT_PUBLIC_RUNPOD_API_KEY || 'your-runpod-api-key';
+      
+      const response = await fetch(RUNPOD_ENDPOINT, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${RUNPOD_API_KEY}`
+        },
+        body: JSON.stringify({
+          input: {
+            audio: base64Audio,
+            file_extension: fileExtension,
+            hf_token: process.env.NEXT_PUBLIC_HF_TOKEN || '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',
+            take_notes: takeNotes
+          }
+        })
       });
 
       if (!response.ok) {
@@ -387,11 +509,23 @@ export default function TranscriptionDashboard() {
         throw new Error(`Transcription failed: ${response.status} ${errorText}`);
       }
 
-      const data: TranscriptionResponse = await response.json();
+      const data = await response.json();
       console.log('Transcription received:', data);
 
+      // Check if there's an error in the response
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Calculate credits used
+      // const duration = recordingDuration;
+      // const creditsUsed = estimateCost(duration);
+      
+      // Deduct credits
+      // await deductCredits(creditsUsed);
+
       // Process chunks and ensure proper formatting
-      const newTranscriptions = data.chunks.map((chunk, index) => ({
+      const newTranscriptions = data.chunks.map((chunk: any, index: number) => ({
         id: `${Date.now()}-${index}`,
         text: chunk.text.trim(),
         timestamp: new Date(chunk.start_time * 1000), // Convert to Date object
@@ -401,10 +535,33 @@ export default function TranscriptionDashboard() {
       }));
 
       // Sort chunks by start time to ensure proper order
-      newTranscriptions.sort((a, b) => a.startTime - b.startTime);
+      newTranscriptions.sort((a: any, b: any) => a.startTime - b.startTime);
 
       setTranscription(prev => [...newTranscriptions, ...prev]);
       setCurrentText('');
+
+      // Save transcription to Supabase if toggle is enabled
+      // if (saveTranscripts && user) {
+      //   try {
+      //     const fullText = data.chunks.map((chunk: any) => chunk.text).join(' ');
+      //     const title = `Transcription ${new Date().toLocaleString()}`;
+      //     
+      //     await supabase.from('transcriptions').insert({
+      //       user_id: user.id,
+      //       title: title,
+      //       content: fullText,
+      //       duration: duration,
+      //       credits_used: creditsUsed,
+      //       take_notes: takeNotes
+      //     });
+      //     
+      //     toast.success('Transcription saved to database');
+      //   } catch (error) {
+      //     console.error('Error saving transcription:', error);
+      //     toast.error('Failed to save transcription');
+      //   }
+      // }
+
     } catch (err) {
       console.error('Error processing recording:', err);
       setError(err instanceof Error ? err.message : 'Failed to process audio. Please try again.');
@@ -527,256 +684,311 @@ ${summary ? `\nSUMMARY:\n${summary}` : ""}
 
   // Add a utility to format timestamp for display
   const formatTimestamp = (timestamp: Date | number | undefined): string => {
+    if (!timestamp) return '';
+    
+    // If it's a number (seconds), convert to minutes and seconds
     if (typeof timestamp === 'number') {
-      // Convert seconds to Date object (assuming timestamp is relative to recording start)
-      const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
-      return date.toLocaleTimeString();
-    } else if (timestamp instanceof Date) {
-      return timestamp.toLocaleTimeString();
+      const minutes = Math.floor(timestamp / 60);
+      const seconds = Math.floor(timestamp % 60);
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
-    return 'Unknown time';
+    
+    // If it's a Date object, format it
+    if (timestamp instanceof Date) {
+      return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    return '';
   };
 
-  return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Speech-to-Text Dashboard</h1>
-            <p className="text-muted-foreground">Real-time transcription and analysis</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={isRecording ? "destructive" : "secondary"} className="px-3 py-1">
-              {isRecording ? (
-                <>
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-2" />
-                  Recording
-                </>
-              ) : (
-                <>
-                  <MicOff className="w-3 h-3 mr-2" />
-                  Stopped
-                </>
-              )}
-            </Badge>
-            {recordingDuration > 0 && (
-              <Badge variant="outline" className="px-3 py-1">
-                <Clock className="w-3 h-3 mr-2" />
-                {formatDuration(recordingDuration)}
-              </Badge>
-            )}
-          </div>
-        </div>
+  // Add a copy handler
+  const handleCopyTranscription = () => {
+    const text = transcription.map(t => t.text).join("\n");
+    navigator.clipboard.writeText(text);
+  };
 
-        {/* Control Panel */}
-        <Card>
+  // Map speakers to consistent color and alignment
+  const speakerOrder: string[] = Array.from(
+    new Set(transcription.map((item) => item.speaker || 'Unknown'))
+  );
+  const speakerMap = speakerOrder.reduce((acc, speaker, idx) => {
+    acc[speaker] = {
+      color: SPEAKER_COLORS[idx % SPEAKER_COLORS.length],
+      align: idx % 2 === 0 ? 'left' : 'right',
+    };
+    return acc;
+  }, {} as Record<string, { color: string; align: 'left' | 'right' }>);
+
+  const handleConnectSupabase = async () => {
+    try {
+      setIsConnectingSupabase(true)
+      // TODO: Implement Supabase connection logic
+      toast.success("Successfully connected to Supabase")
+    } catch (error) {
+      console.error("Error connecting to Supabase:", error)
+      toast.error("Failed to connect to Supabase")
+    } finally {
+      setIsConnectingSupabase(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-1 h-[100dvh] bg-[#f5faff] dark:bg-neutral-900">
+      <AppSidebar 
+        className="w-64 border-r" 
+        isDark={isDark}
+        onThemeToggle={toggleTheme}
+        autoDownloadRecordings={autoDownloadRecordings}
+        onAutoDownloadRecordingsChange={setAutoDownloadRecordings}
+        saveTranscripts={saveTranscripts}
+        onSaveTranscriptsChange={setSaveTranscripts}
+        autoDownloadTranscripts={autoDownloadTranscripts}
+        onAutoDownloadTranscriptsChange={setAutoDownloadTranscripts}
+        autoSummarize={autoSummarize}
+        onAutoSummarizeChange={setAutoSummarize}
+        moreThanTwoSpeakers={moreThanTwoSpeakers}
+        onMoreThanTwoSpeakersChange={setMoreThanTwoSpeakers}
+        takeNotes={takeNotes}
+        onTakeNotesChange={setTakeNotes}
+        onOpenSupabaseModal={() => setSupabaseModalOpen(true)}
+      />
+      <SupabaseConnectModal open={supabaseModalOpen} onClose={() => setSupabaseModalOpen(false)} />
+      <main className="flex-1 overflow-y-auto p-8 flex flex-col gap-8">
+        {/* Credit Display */}
+        {user && (
+          <Card className="shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Credits
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold">{creditsLoading ? '...' : credits.toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">Available credits</p>
+                </div>
+                <Badge variant="outline" className="text-sm">
+                  $0.10/min
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recording Controls */}
+        <Card className="shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mic className="w-5 h-5" />
-              Recording Controls
-            </CardTitle>
-            <CardDescription>Start or stop recording to begin real-time transcription</CardDescription>
+            <CardTitle>Audio Recording</CardTitle>
+            <CardDescription>
+              Record audio for transcription
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <Button
+                className={`transition-all duration-150 font-semibold focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white ${
+                  isRecording
+                    ? 'bg-red-600 hover:bg-red-700 text-white scale-105 shadow-lg'
+                    : 'bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 shadow-md'
+                }`}
+                variant="default"
                 onClick={isRecording ? stopRecording : startRecording}
+                disabled={isProcessing}
                 size="lg"
-                variant={isRecording ? "destructive" : "default"}
-                className="px-8"
               >
                 {isRecording ? (
                   <>
-                    <Square className="w-4 h-4 mr-2" />
+                    <Square className="mr-2 h-4 w-4 animate-pulse" />
                     Stop Recording
                   </>
                 ) : (
                   <>
-                    <Play className="w-4 h-4 mr-2" />
+                    <Mic className="mr-2 h-4 w-4" />
                     Start Recording
                   </>
                 )}
               </Button>
-
-              <Separator orientation="vertical" className="h-8" />
-
+              {/* Recording indicator and timer */}
+              {isRecording && (
+                <div className="flex items-center gap-2 ml-2 animate-fade-in">
+                  <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+                  <span className="font-mono text-sm text-red-700">Recording in progress</span>
+                  <span className="font-mono text-xs bg-gray-100 rounded px-2 py-0.5 ml-2 border border-gray-300">
+                    {formatDuration(recordingDuration)}
+                  </span>
+                </div>
+              )}
+              <Select
+                value={selectedMicrophone}
+                onValueChange={handleMicrophoneChange}
+              >
+                <SelectTrigger className="w-[240px] bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 font-semibold shadow-md border-none">
+                  <Mic className="mr-2 h-4 w-4" />
+                  <span>Microphone</span>
+                </SelectTrigger>
+                <SelectContent className="w-[240px] bg-white dark:bg-neutral-900">
+                  {availableMicrophones.map((mic) => (
+                    <SelectItem key={mic.deviceId} value={mic.deviceId}>
+                      {mic.label || `Microphone ${mic.deviceId.slice(0, 4)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button
+                className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 ml-2 font-semibold shadow-md"
+                variant="default"
+                size="lg"
+                onClick={clearTranscription}
+                disabled={transcription.length === 0}
+              >
+                Clear
+              </Button>
+              <Button
+                className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 ml-2 font-semibold shadow-md"
+                variant="default"
+                size="lg"
                 onClick={generateSummary}
-                disabled={isGeneratingSummary || !transcription.length}
-                variant="outline"
-                className="flex items-center gap-2"
+                disabled={transcription.length === 0 || isGeneratingSummary}
               >
                 {isGeneratingSummary ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Summarizing...
+                    <Loader size="sm" color="currentColor" className="mr-2" />
+                    Generating...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-4 w-4" />
-                    Summarize
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate Summary
                   </>
                 )}
               </Button>
-
-              <Button onClick={downloadPDF} disabled={transcription.length === 0 || isGeneratingPDF} variant="outline">
-                {isGeneratingPDF ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4 mr-2" />
-                )}
-                Download PDF
-              </Button>
-
-              <Button onClick={clearTranscription} disabled={transcription.length === 0} variant="outline">
-                Clear All
-              </Button>
-
-              <Separator orientation="vertical" className="h-8" />
-
-              <select 
-                className="border rounded-md p-2 text-sm bg-background text-foreground w-[200px]"
-                value={selectedMic}
-                onChange={(e) => changeMic(e.target.value)}
-                aria-label="Select microphone"
+              <Button
+                className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 ml-2 font-semibold shadow-md"
+                variant="default"
+                size="lg"
+                onClick={downloadPDF}
+                disabled={transcription.length === 0 || isGeneratingPDF}
               >
-                {micOptions.map(mic => (
-                  <option key={mic.deviceId} value={mic.deviceId}>{mic.label || `Mic ${mic.deviceId.slice(0, 5)}`}</option>
-                ))}
-              </select>
+                {isGeneratingPDF ? (
+                  <>
+                    <Loader size="sm" color="currentColor" className="mr-2" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Download PDF
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Transcription Panel */}
-          <div className="lg:col-span-2">
-            <Card className="h-[600px]">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Transcription Output
-                </CardTitle>
+        {/* Transcription Display */}
+        <Card className="flex-1 flex flex-col shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Transcription</CardTitle>
                 <CardDescription>
-                  Recorded audio will be processed after stopping
+                  {isRecording ? (
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                      Recording in progress...
+                    </div>
+                  ) : (
+                    "Transcription will appear here"
+                  )}
                 </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[calc(100%-120px)]">
-                {recordedAudio && !isProcessing && transcription.length === 0 && (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="space-y-2 text-center">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto" />
-                      <p className="text-muted-foreground">Preparing to process recording...</p>
-                    </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyTranscription}
+                disabled={transcription.length === 0}
+                className="border-black text-black dark:border-white dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95 transition-all duration-150"
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Copy
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col relative">
+            <ScrollArea className="flex-1 w-full">
+              {isProcessing ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-6">
+                    <Loader size="lg" color="currentColor" className="w-24 h-24" />
+                    <span className="text-lg font-medium text-muted-foreground">Processing audio...</span>
                   </div>
-                )}
-                {isProcessing && (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="space-y-2 text-center">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto" />
-                      <p className="text-muted-foreground">Processing your recording...</p>
-                    </div>
-                  </div>
-                )}
-                {!isRecording && !isProcessing && transcription.length > 0 && (
-                  <ScrollArea className="h-full pr-4">
-                    <div className="space-y-4">
-                      {transcription.map((segment, index) => (
-                        <div key={segment.id}>
-                          {index === 0 && (
-                            <p className="text-sm text-muted-foreground mb-2">
-                              Started at: {formatTimestamp(segment.startTime)}
-                            </p>
-                          )}
-                          <p className="mb-1">{segment.text}</p>
+                </div>
+              ) : takeNotes ? (
+                <div className="flex flex-col gap-4 p-4">
+                  <div className="prose dark:prose-invert max-w-none">
+                    {transcription.map((item, index) => (
+                      <div key={index} className="mb-4">
+                        <div className="text-sm whitespace-pre-line">{item.text}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {formatTimestamp(item.start)}
                         </div>
-                      ))}
-                      {currentText && (
-                        <div className="mt-2 text-muted">
-                          <p>{currentText}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {transcription.map((item, index) => {
+                    const speaker = item.speaker || 'Unknown';
+                    const speakerNumber = speaker.replace(/[^0-9]/g, '');
+                    const displaySpeaker = speakerNumber ? `Speaker ${parseInt(speakerNumber) + 1}` : speaker;
+                    const { color, align } = speakerMap[speaker] || { color: 'bg-gray-400', align: 'left' };
+                    return (
+                      <div
+                        key={index}
+                        className={`flex ${align === 'right' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[70%] rounded-lg px-4 py-2 shadow bg-gray-50 dark:bg-neutral-900 flex items-start gap-2 ${
+                            align === 'right' ? 'flex-row-reverse' : ''
+                          }`}
+                        >
+                          <span className={`mt-1 w-3 h-3 rounded-full ${color} shrink-0`}></span>
+                          <div>
+                            <div className="text-xs font-semibold text-muted-foreground mb-1">{displaySpeaker}</div>
+                            <div className="text-sm whitespace-pre-line">{item.text}</div>
+                            <span className="text-[10px] text-muted-foreground block mt-1">
+                              {formatTimestamp(item.start)}
+                            </span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                )}
-                {isRecording && (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="space-y-2 text-center">
-                      <Mic className="w-8 h-8 mx-auto text-red-500 animate-pulse" />
-                      <p className="text-muted-foreground">Recording in progress...</p>
-                      <p className="text-sm text-muted-foreground">Duration: {formatDuration(recordingDuration)}</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Summary Panel */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  AI Summary
-                </CardTitle>
-                <CardDescription>Intelligent summary of the transcription</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {summary ? (
-                  <ScrollArea className="h-[200px]">
-                    <Textarea
-                      value={summary}
-                      readOnly
-                      className="min-h-[180px] resize-none border-0 p-0 focus-visible:ring-0"
-                    />
-                  </ScrollArea>
-                ) : (
-                  <div className="flex items-center justify-center h-[200px] text-center">
-                    <div className="space-y-2">
-                      <Sparkles className="w-8 h-8 mx-auto text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">Generate a summary from your transcription</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Stats Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Session Statistics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Total Segments</span>
-                  <Badge variant="secondary">{transcription.length}</Badge>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Recording Time</span>
-                  <Badge variant="secondary">{formatDuration(recordingDuration)}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Word Count</span>
-                  <Badge variant="secondary">
-                    {transcription.reduce((acc, seg) => acc + seg.text.split(" ").length, 0)}
-                  </Badge>
-                </div>
-                {transcription.length > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Average Words/Segment</span>
-                    <Badge variant="secondary">
-                      {Math.round(transcription.reduce((acc, seg) => acc + seg.text.split(" ").length, 0) / transcription.length)}
-                    </Badge>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+        {/* Summary Section always under Transcription */}
+        <Card className="shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+          <CardHeader>
+            <CardTitle>Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {summary ? (
+              <Textarea
+                value={summary}
+                readOnly
+                className="min-h-[100px] bg-gray-50 dark:bg-neutral-900"
+              />
+            ) : (
+              <div className="text-muted-foreground text-sm">No summary generated yet.</div>
+            )}
+          </CardContent>
+        </Card>
+      </main>
     </div>
   )
 }
