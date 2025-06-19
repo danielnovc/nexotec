@@ -510,7 +510,7 @@ export default function TranscriptionDashboard() {
       }
 
       const data = await response.json();
-      console.log('Transcription received:', data);
+      console.log('Transcription received:', data); 
 
       // Check if there's an error in the response
       if (data.error) {
