@@ -36,8 +36,8 @@ export async function POST(req: Request) {
 
     console.log('Sending request to RunPod with payload structure:', Object.keys(requestPayload.input));
 
-    // Make request to RunPod endpoint
-    const response = await fetch(backendUrl, {
+    // For RunPod Serverless, we need to submit the job and then poll for results
+    const submitResponse = await fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,77 +46,66 @@ export async function POST(req: Request) {
       body: JSON.stringify(requestPayload),
     });
 
-    console.log('RunPod response status:', response.status);
-    console.log('RunPod response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('RunPod submit response status:', submitResponse.status);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('RunPod error response:', errorText);
-      throw new Error(`Backend error: ${response.status} ${errorText}`);
+    if (!submitResponse.ok) {
+      const errorText = await submitResponse.text();
+      console.error('RunPod submit error response:', errorText);
+      throw new Error(`Backend error: ${submitResponse.status} ${errorText}`);
     }
 
-    const result = await response.json();
-    console.log('RunPod raw response:', JSON.stringify(result, null, 2));
-    console.log('RunPod response type:', typeof result);
-    console.log('RunPod response keys:', Object.keys(result));
-    console.log('RunPod result.chunks:', result.chunks);
-    console.log('RunPod result.chunks type:', typeof result.chunks);
-    console.log('RunPod result.chunks length:', result.chunks?.length);
-    
-    // Check if there's an error in the response
-    if (result.error) {
-      console.error('RunPod returned error:', result.error);
-      throw new Error(result.error);
-    }
-    
-    if (isSummaryRequest) {
-      return NextResponse.json({ 
-        message: 'Summary generated successfully', 
-        status: 'success', 
-        summary: result.summary
-      }, { status: 200 });
-    } else {
-      // For transcription, check if we actually got transcription data
-      console.log('Checking transcription data in result:', {
-        hasChunks: !!result.chunks,
-        hasFullText: !!result.full_text,
-        resultKeys: Object.keys(result),
-        chunksType: typeof result.chunks,
-        chunksLength: result.chunks?.length
-      });
+    const submitResult = await submitResponse.json();
+    console.log('RunPod submit result:', JSON.stringify(submitResult, null, 2));
+
+    // Check if we got an immediate response (synchronous) or need to poll (asynchronous)
+    if (submitResult.output || submitResult.data || submitResult.chunks) {
+      // Synchronous response - process immediately
+      console.log('Received synchronous response from RunPod');
+      let result = submitResult;
       
       // Handle different possible RunPod response formats
-      let transcriptionData = result;
-      
-      // Check if result is wrapped in an 'output' field (common in RunPod serverless)
-      if (result.output && (result.output.chunks || result.output.full_text)) {
-        console.log('Found transcription data in result.output');
-        transcriptionData = result.output;
+      if (submitResult.output && (submitResult.output.chunks || submitResult.output.full_text)) {
+        console.log('Found transcription data in submitResult.output');
+        result = submitResult.output;
       }
       
-      // Check if result is wrapped in a 'data' field
-      if (result.data && (result.data.chunks || result.data.full_text)) {
-        console.log('Found transcription data in result.data');
-        transcriptionData = result.data;
+      if (submitResult.data && (submitResult.data.chunks || submitResult.data.full_text)) {
+        console.log('Found transcription data in submitResult.data');
+        result = submitResult.data;
       }
       
-      console.log('Final transcription data:', transcriptionData);
-      console.log('Final chunks:', transcriptionData.chunks);
-      console.log('Final full_text:', transcriptionData.full_text);
-      
-      if (!transcriptionData.chunks && !transcriptionData.full_text) {
-        console.error('Backend returned success but no transcription data:', result);
-        throw new Error('Backend returned success but no transcription data. Check if models are properly initialized.');
+      if (isSummaryRequest) {
+        return NextResponse.json({ 
+          message: 'Summary generated successfully', 
+          status: 'success', 
+          summary: result.summary
+        }, { status: 200 });
+      } else {
+        return NextResponse.json({ 
+          message: 'Audio processed successfully', 
+          status: 'success', 
+          chunks: result.chunks || [],
+          full_text: result.full_text || ''
+        }, { status: 200 });
       }
+    } else {
+      // Asynchronous response - need to poll for results
+      console.log('Received asynchronous response, need to poll for results');
       
-      // For transcription, the RunPod response should have chunks and full_text directly
+      // For now, return a status indicating the job is being processed
+      // In a real implementation, you would:
+      // 1. Store the job ID
+      // 2. Set up a polling mechanism
+      // 3. Return the job ID to the frontend
+      // 4. Frontend polls for results
+      
       return NextResponse.json({ 
-        message: 'Audio processed successfully', 
-        status: 'success', 
-        chunks: transcriptionData.chunks || [],
-        full_text: transcriptionData.full_text || ''
-      }, { status: 200 });
+        message: 'Job submitted successfully', 
+        status: 'processing',
+        jobId: submitResult.id || 'unknown'
+      }, { status: 202 });
     }
+    
   } catch (error) {
     console.error('Error handling audio processing request:', error);
     return NextResponse.json({ 

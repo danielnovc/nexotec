@@ -505,61 +505,57 @@ export default function TranscriptionDashboard() {
       }
 
       const data = await response.json();
-      console.log('Transcription received:', data); 
-      console.log('Data type:', typeof data);
-      console.log('Data keys:', Object.keys(data));
-      console.log('Data.chunks:', data.chunks);
-      console.log('Data.chunks type:', typeof data.chunks);
-      console.log('Data.chunks length:', data.chunks?.length);
+      console.log('API response received:', data); 
+      console.log('Response status:', data.status);
 
       // Check if there's an error in the response
       if (data.error) {
         throw new Error(data.error);
       }
 
-      // Check if chunks exist before trying to map
-      if (!data.chunks || !Array.isArray(data.chunks)) {
-        console.error('No chunks array in response:', data);
-        throw new Error('Invalid response format: missing chunks array');
+      // Handle different response statuses
+      if (data.status === 'processing') {
+        // Asynchronous processing - job submitted but not complete
+        console.log('Job submitted for processing, job ID:', data.jobId);
+        setError('Transcription is being processed. This may take a few moments.');
+        // TODO: Implement polling mechanism for job completion
+        return;
       }
 
-      // Process chunks and ensure proper formatting
-      const newTranscriptions = data.chunks.map((chunk: any, index: number) => ({
-        id: `${Date.now()}-${index}`,
-        text: chunk.text.trim(),
-        timestamp: new Date(chunk.start * 1000), // Convert to Date object
-        startTime: chunk.start,
-        endTime: chunk.end,
-        speaker: chunk.speaker || 'Speaker 1',
-      }));
+      if (data.status === 'success') {
+        // Synchronous processing - results available immediately
+        console.log('Transcription completed successfully');
+        console.log('Data type:', typeof data);
+        console.log('Data keys:', Object.keys(data));
+        console.log('Data.chunks:', data.chunks);
+        console.log('Data.chunks type:', typeof data.chunks);
+        console.log('Data.chunks length:', data.chunks?.length);
 
-      // Sort chunks by start time to ensure proper order
-      newTranscriptions.sort((a: any, b: any) => a.startTime - b.startTime);
+        // Check if chunks exist before trying to map
+        if (!data.chunks || !Array.isArray(data.chunks)) {
+          console.error('No chunks array in response:', data);
+          throw new Error('Invalid response format: missing chunks array');
+        }
 
-      setTranscription(prev => [...newTranscriptions, ...prev]);
-      setCurrentText('');
+        // Process chunks and ensure proper formatting
+        const newTranscriptions = data.chunks.map((chunk: any, index: number) => ({
+          id: `${Date.now()}-${index}`,
+          text: chunk.text.trim(),
+          timestamp: new Date(chunk.start * 1000), // Convert to Date object
+          startTime: chunk.start,
+          endTime: chunk.end,
+          speaker: chunk.speaker || 'Speaker 1',
+        }));
 
-      // Save transcription to Supabase if toggle is enabled
-      // if (saveTranscripts && user) {
-      //   try {
-      //     const fullText = data.chunks.map((chunk: any) => chunk.text).join(' ');
-      //     const title = `Transcription ${new Date().toLocaleString()}`;
-      //     
-      //     await supabase.from('transcriptions').insert({
-      //       user_id: user.id,
-      //       title: title,
-      //       content: fullText,
-      //       duration: duration,
-      //       credits_used: creditsUsed,
-      //       take_notes: takeNotes
-      //     });
-      //     
-      //     toast.success('Transcription saved to database');
-      //   } catch (error) {
-      //     console.error('Error saving transcription:', error);
-      //     toast.error('Failed to save transcription');
-      //   }
-      // }
+        // Sort chunks by start time to ensure proper order
+        newTranscriptions.sort((a: any, b: any) => a.startTime - b.startTime);
+
+        setTranscription(prev => [...newTranscriptions, ...prev]);
+        setCurrentText('');
+        setError(null); // Clear any previous errors
+      } else {
+        throw new Error(`Unexpected response status: ${data.status}`);
+      }
 
     } catch (err) {
       console.error('Error processing recording:', err);
