@@ -498,7 +498,6 @@ export default function TranscriptionDashboard() {
           input: {
             audio: base64Audio,
             file_extension: fileExtension,
-            hf_token: process.env.NEXT_PUBLIC_HF_TOKEN,
             take_notes: takeNotes
           }
         })
@@ -589,20 +588,36 @@ export default function TranscriptionDashboard() {
       // Combine all transcription text
       const fullText = transcription.map(t => t.text).join(" ");
 
-      const response = await fetch('http://localhost:8000/summarize', {
+      const RUNPOD_ENDPOINT = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'https://your-runpod-endpoint.runpod.net/run';
+      const RUNPOD_API_KEY = process.env.NEXT_PUBLIC_RUNPOD_API_KEY || 'your-runpod-api-key';
+
+      const response = await fetch(RUNPOD_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${RUNPOD_API_KEY}`
         },
-        body: JSON.stringify({ text: fullText }),
+        body: JSON.stringify({
+          input: {
+            text: fullText,
+            action: 'summarize'
+          }
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate summary');
+        const errorText = await response.text();
+        throw new Error(`Summary generation failed: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
-      setSummary(data.summary);
+      
+      // Check if there's an error in the response
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      setSummary(data.output?.summary || data.summary);
     } catch (err) {
       console.error('Error generating summary:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate summary');

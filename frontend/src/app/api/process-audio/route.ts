@@ -2,37 +2,52 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
-    const audioFile = formData.get('audio') as File;
+    const body = await req.json();
+    const { audio, file_extension, take_notes } = body.input;
 
-    if (!audioFile) {
-      return NextResponse.json({ message: 'No audio file provided', status: 'error' }, { status: 400 });
+    if (!audio) {
+      return NextResponse.json({ message: 'No audio data provided', status: 'error' }, { status: 400 });
     }
 
-    console.log('Processing audio file:', audioFile.name);
-
-    // Forward the audio file to the FastAPI backend
-    const backendFormData = new FormData();
-    backendFormData.append('file', audioFile, audioFile.name);
+    console.log('Processing audio data');
 
     // Use environment variable for backend URL, fallback to localhost for development
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/process-audio`, {
+    const backendUrl = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'http://localhost:8000';
+    const runpodApiKey = process.env.NEXT_PUBLIC_RUNPOD_API_KEY;
+
+    // Make request to RunPod endpoint
+    const response = await fetch(backendUrl, {
       method: 'POST',
-      body: backendFormData,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${runpodApiKey}`
+      },
+      body: JSON.stringify({
+        input: {
+          audio,
+          file_extension,
+          take_notes
+        }
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`Backend error: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Backend error: ${response.status} ${errorText}`);
     }
 
     const result = await response.json();
     
+    // Check if there's an error in the response
+    if (result.error) {
+      throw new Error(result.error);
+    }
+    
     return NextResponse.json({ 
       message: 'Audio processed successfully', 
       status: 'success', 
-      chunks: result.chunks,
-      full_text: result.full_text
+      chunks: result.output?.chunks || result.chunks,
+      full_text: result.output?.full_text || result.full_text
     }, { status: 200 });
   } catch (error) {
     console.error('Error handling audio processing request:', error);
