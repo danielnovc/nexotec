@@ -3,17 +3,21 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { audio, file_extension, take_notes } = body.input;
-
-    if (!audio) {
-      return NextResponse.json({ message: 'No audio data provided', status: 'error' }, { status: 400 });
-    }
-
-    console.log('Processing audio data');
+    const { audio, file_extension, take_notes, text, action } = body.input;
 
     // Use environment variable for backend URL, fallback to localhost for development
     const backendUrl = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'http://localhost:8000';
     const runpodApiKey = process.env.NEXT_PUBLIC_RUNPOD_API_KEY;
+
+    // Determine if this is a transcription or summary request
+    const isSummaryRequest = action === 'summarize' && text;
+    const isTranscriptionRequest = audio;
+
+    if (!isSummaryRequest && !isTranscriptionRequest) {
+      return NextResponse.json({ message: 'No audio data or text provided', status: 'error' }, { status: 400 });
+    }
+
+    console.log(isSummaryRequest ? 'Processing summary request' : 'Processing audio data');
 
     // Make request to RunPod endpoint
     const response = await fetch(backendUrl, {
@@ -23,7 +27,10 @@ export async function POST(req: Request) {
         'Authorization': `Bearer ${runpodApiKey}`
       },
       body: JSON.stringify({
-        input: {
+        input: isSummaryRequest ? {
+          text,
+          action: 'summarize'
+        } : {
           audio,
           file_extension,
           take_notes
@@ -43,12 +50,20 @@ export async function POST(req: Request) {
       throw new Error(result.error);
     }
     
-    return NextResponse.json({ 
-      message: 'Audio processed successfully', 
-      status: 'success', 
-      chunks: result.output?.chunks || result.chunks,
-      full_text: result.output?.full_text || result.full_text
-    }, { status: 200 });
+    if (isSummaryRequest) {
+      return NextResponse.json({ 
+        message: 'Summary generated successfully', 
+        status: 'success', 
+        summary: result.output?.summary || result.summary
+      }, { status: 200 });
+    } else {
+      return NextResponse.json({ 
+        message: 'Audio processed successfully', 
+        status: 'success', 
+        chunks: result.output?.chunks || result.chunks,
+        full_text: result.output?.full_text || result.full_text
+      }, { status: 200 });
+    }
   } catch (error) {
     console.error('Error handling audio processing request:', error);
     return NextResponse.json({ 

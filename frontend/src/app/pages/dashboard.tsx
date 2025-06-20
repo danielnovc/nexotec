@@ -484,15 +484,11 @@ export default function TranscriptionDashboard() {
       
       console.log('Sending audio to RunPod, size:', audioBlob.size);
       
-      // TODO: Replace with your actual RunPod endpoint URL and API key
-      const RUNPOD_ENDPOINT = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'https://your-runpod-endpoint.runpod.net/run';
-      const RUNPOD_API_KEY = process.env.NEXT_PUBLIC_RUNPOD_API_KEY || 'your-runpod-api-key';
-      
-      const response = await fetch(RUNPOD_ENDPOINT, {
+      // Send to our Next.js API route which will forward to RunPod
+      const response = await fetch('/api/process-audio', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${RUNPOD_API_KEY}`
         },
         body: JSON.stringify({
           input: {
@@ -516,20 +512,13 @@ export default function TranscriptionDashboard() {
         throw new Error(data.error);
       }
 
-      // Calculate credits used
-      // const duration = recordingDuration;
-      // const creditsUsed = estimateCost(duration);
-      
-      // Deduct credits
-      // await deductCredits(creditsUsed);
-
       // Process chunks and ensure proper formatting
       const newTranscriptions = data.chunks.map((chunk: any, index: number) => ({
         id: `${Date.now()}-${index}`,
         text: chunk.text.trim(),
-        timestamp: new Date(chunk.start_time * 1000), // Convert to Date object
-        startTime: chunk.start_time,
-        endTime: chunk.end_time,
+        timestamp: new Date(chunk.start * 1000), // Convert to Date object
+        startTime: chunk.start,
+        endTime: chunk.end,
         speaker: chunk.speaker || 'Speaker 1',
       }));
 
@@ -588,14 +577,10 @@ export default function TranscriptionDashboard() {
       // Combine all transcription text
       const fullText = transcription.map(t => t.text).join(" ");
 
-      const RUNPOD_ENDPOINT = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'https://your-runpod-endpoint.runpod.net/run';
-      const RUNPOD_API_KEY = process.env.NEXT_PUBLIC_RUNPOD_API_KEY || 'your-runpod-api-key';
-
-      const response = await fetch(RUNPOD_ENDPOINT, {
+      const response = await fetch('/api/process-audio', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${RUNPOD_API_KEY}`
         },
         body: JSON.stringify({
           input: {
@@ -617,7 +602,7 @@ export default function TranscriptionDashboard() {
         throw new Error(data.error);
       }
       
-      setSummary(data.output?.summary || data.summary);
+      setSummary(data.summary);
     } catch (err) {
       console.error('Error generating summary:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate summary');
@@ -626,7 +611,7 @@ export default function TranscriptionDashboard() {
     }
   };
 
-  const downloadPDF = async () => {
+  const downloadPDF = async () => { 
     setIsGeneratingPDF(true)
 
     // Mock PDF generation
