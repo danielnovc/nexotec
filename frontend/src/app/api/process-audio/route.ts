@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
+  console.log('=== API ROUTE CALLED ===');
+  console.log('Request method:', req.method);
+  console.log('Request URL:', req.url);
+  
   try {
     const body = await req.json();
+    console.log('Request body received:', Object.keys(body));
     const { audio, file_extension, take_notes, text, action, jobId } = body.input;
+    console.log('Extracted input data:', { audio: !!audio, file_extension, take_notes, text: !!text, action, jobId });
 
     // Use environment variable for backend URL, fallback to localhost for development
     const backendUrl = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'http://localhost:8000';
@@ -107,6 +113,7 @@ export async function POST(req: Request) {
     }
 
     const result = await response.json();
+    console.log('=== RUNPOD RESPONSE DEBUG ===');
     console.log('RunPod raw response:', JSON.stringify(result, null, 2));
     console.log('RunPod response type:', typeof result);
     console.log('RunPod response keys:', Object.keys(result));
@@ -115,6 +122,7 @@ export async function POST(req: Request) {
     console.log('RunPod response.error:', result.error);
     console.log('RunPod response.jobId type:', typeof result.jobId);
     console.log('RunPod response.jobId truthy check:', !!result.jobId);
+    console.log('=== END RUNPOD RESPONSE DEBUG ===');
     
     // Check if RunPod wrapped the response in an 'output' field
     let actualResult = result;
@@ -211,6 +219,11 @@ export async function POST(req: Request) {
     
   } catch (error) {
     console.error('Error handling audio processing request:', error);
+    console.error('Full error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error
+    });
     return NextResponse.json({ 
       message: 'Failed to process audio', 
       status: 'error', 
