@@ -475,6 +475,8 @@ export default function TranscriptionDashboard() {
   const processRecording = async (audioBlob: Blob) => {
     setIsProcessing(true);
     setError(null);
+    let responseData: any = null;
+    
     try {
       // Convert audio blob to base64
       const base64Audio = await blobToBase64(audioBlob);
@@ -504,39 +506,42 @@ export default function TranscriptionDashboard() {
         throw new Error(`Transcription failed: ${response.status} ${errorText}`);
       }
 
-      const data = await response.json();
-      console.log('API response received:', data); 
-      console.log('Response status:', data.status);
+      responseData = await response.json();
+      console.log('API response received:', responseData); 
+      console.log('Response status:', responseData.status);
 
       // Check if there's an error in the response
-      if (data.error) {
-        throw new Error(data.error);
+      if (responseData.error) {
+        throw new Error(responseData.error);
       }
 
       // Handle different response statuses
-      if (data.status === 'processing') {
+      if (responseData.status === 'processing') {
         // Asynchronous processing - job submitted but not complete
-        console.log('Job submitted for processing, job ID:', data.jobId);
-        setError('Transcription is being processed. This may take a few moments.');
+        console.log('Job submitted for processing, job ID:', responseData.jobId);
         
-        // Start polling for results
-        await pollForResults(data.jobId);
+        // Start polling for results - keep loading state active
+        await pollForResults(responseData.jobId);
         return;
       }
 
-      if (data.status === 'success') {
+      if (responseData.status === 'success') {
         // Synchronous processing - results available immediately
         console.log('Transcription completed successfully');
-        await processTranscriptionData(data);
+        await processTranscriptionData(responseData);
       } else {
-        throw new Error(`Unexpected response status: ${data.status}`);
+        throw new Error(`Unexpected response status: ${responseData.status}`);
       }
 
     } catch (err) {
       console.error('Error processing recording:', err);
       setError(err instanceof Error ? err.message : 'Failed to process audio. Please try again.');
     } finally {
-      setIsProcessing(false);
+      // Only stop loading if we're not in polling mode
+      // The loading state will be stopped in pollForResults or processTranscriptionData
+      if (!responseData || responseData.status !== 'processing') {
+        setIsProcessing(false);
+      }
     }
   };
 
@@ -572,10 +577,11 @@ export default function TranscriptionDashboard() {
         if (data.status === 'success') {
           console.log('Job completed successfully!');
           await processTranscriptionData(data);
+          setIsProcessing(false); // Stop loading when transcription is complete
           return;
         } else if (data.status === 'processing' || data.status === 'unknown') {
           console.log('Job still processing, waiting...');
-          setError(`Transcription is being processed... (${attempt + 1}/${maxAttempts})`);
+          // Don't set error message, just continue polling
           await new Promise(resolve => setTimeout(resolve, pollInterval));
         } else {
           throw new Error(`Unexpected poll response status: ${data.status}`);
@@ -583,12 +589,16 @@ export default function TranscriptionDashboard() {
       } catch (err) {
         console.error(`Error during polling attempt ${attempt + 1}:`, err);
         if (attempt === maxAttempts - 1) {
+          setError(err instanceof Error ? err.message : 'Polling timeout - job did not complete within expected time');
+          setIsProcessing(false); // Stop loading on final error
           throw err;
         }
         await new Promise(resolve => setTimeout(resolve, pollInterval));
       }
     }
     
+    setError('Polling timeout - job did not complete within expected time');
+    setIsProcessing(false); // Stop loading on timeout
     throw new Error('Polling timeout - job did not complete within expected time');
   };
 
@@ -623,6 +633,7 @@ export default function TranscriptionDashboard() {
     setTranscription(prev => [...newTranscriptions, ...prev]);
     setCurrentText('');
     setError(null); // Clear any previous errors
+    setIsProcessing(false); // Stop loading when transcription is processed successfully
   };
 
   const formatTime = (seconds: number): string => {

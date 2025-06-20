@@ -47,9 +47,9 @@ export async function POST(req: Request) {
           chunks: result.chunks || [],
           full_text: result.full_text || ''
         }, { status: 200 });
-      } else if (statusResult.status === 'IN_PROGRESS') {
+      } else if (statusResult.status === 'IN_PROGRESS' || statusResult.status === 'WAITING_FOR_INIT') {
         return NextResponse.json({ 
-          message: 'Job still processing', 
+          message: statusResult.status === 'WAITING_FOR_INIT' ? 'Job waiting for models to initialize' : 'Job still processing', 
           status: 'processing',
           jobId: jobId
         }, { status: 202 });
