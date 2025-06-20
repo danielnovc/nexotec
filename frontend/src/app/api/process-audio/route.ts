@@ -110,6 +110,9 @@ export async function POST(req: Request) {
     console.log('RunPod raw response:', JSON.stringify(result, null, 2));
     console.log('RunPod response type:', typeof result);
     console.log('RunPod response keys:', Object.keys(result));
+    console.log('RunPod response.jobId:', result.jobId);
+    console.log('RunPod response.status:', result.status);
+    console.log('RunPod response.error:', result.error);
     
     // Check if there's an error in the response
     if (result.error) {
