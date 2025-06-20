@@ -518,41 +518,16 @@ export default function TranscriptionDashboard() {
         // Asynchronous processing - job submitted but not complete
         console.log('Job submitted for processing, job ID:', data.jobId);
         setError('Transcription is being processed. This may take a few moments.');
-        // TODO: Implement polling mechanism for job completion
+        
+        // Start polling for results
+        await pollForResults(data.jobId);
         return;
       }
 
       if (data.status === 'success') {
         // Synchronous processing - results available immediately
         console.log('Transcription completed successfully');
-        console.log('Data type:', typeof data);
-        console.log('Data keys:', Object.keys(data));
-        console.log('Data.chunks:', data.chunks);
-        console.log('Data.chunks type:', typeof data.chunks);
-        console.log('Data.chunks length:', data.chunks?.length);
-
-        // Check if chunks exist before trying to map
-        if (!data.chunks || !Array.isArray(data.chunks)) {
-          console.error('No chunks array in response:', data);
-          throw new Error('Invalid response format: missing chunks array');
-        }
-
-        // Process chunks and ensure proper formatting
-        const newTranscriptions = data.chunks.map((chunk: any, index: number) => ({
-          id: `${Date.now()}-${index}`,
-          text: chunk.text.trim(),
-          timestamp: new Date(chunk.start * 1000), // Convert to Date object
-          startTime: chunk.start,
-          endTime: chunk.end,
-          speaker: chunk.speaker || 'Speaker 1',
-        }));
-
-        // Sort chunks by start time to ensure proper order
-        newTranscriptions.sort((a: any, b: any) => a.startTime - b.startTime);
-
-        setTranscription(prev => [...newTranscriptions, ...prev]);
-        setCurrentText('');
-        setError(null); // Clear any previous errors
+        await processTranscriptionData(data);
       } else {
         throw new Error(`Unexpected response status: ${data.status}`);
       }
@@ -563,6 +538,91 @@ export default function TranscriptionDashboard() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Poll for job completion
+  const pollForResults = async (jobId: string) => {
+    const maxAttempts = 60; // 60 seconds max (1 minute)
+    const pollInterval = 2000; // 2 seconds
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        console.log(`Polling attempt ${attempt + 1}/${maxAttempts} for job: ${jobId}`);
+        
+        const response = await fetch('/api/process-audio', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            input: {
+              jobId: jobId
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Status check failed: ${response.status} ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Poll response:', data);
+
+        if (data.status === 'success') {
+          console.log('Job completed successfully!');
+          await processTranscriptionData(data);
+          return;
+        } else if (data.status === 'processing' || data.status === 'unknown') {
+          console.log('Job still processing, waiting...');
+          setError(`Transcription is being processed... (${attempt + 1}/${maxAttempts})`);
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+        } else {
+          throw new Error(`Unexpected poll response status: ${data.status}`);
+        }
+      } catch (err) {
+        console.error(`Error during polling attempt ${attempt + 1}:`, err);
+        if (attempt === maxAttempts - 1) {
+          throw err;
+        }
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+    }
+    
+    throw new Error('Polling timeout - job did not complete within expected time');
+  };
+
+  // Process transcription data
+  const processTranscriptionData = async (data: any) => {
+    console.log('Processing transcription data:', data);
+    console.log('Data type:', typeof data);
+    console.log('Data keys:', Object.keys(data));
+    console.log('Data.chunks:', data.chunks);
+    console.log('Data.chunks type:', typeof data.chunks);
+    console.log('Data.chunks length:', data.chunks?.length);
+
+    // Check if chunks exist before trying to map
+    if (!data.chunks || !Array.isArray(data.chunks)) {
+      console.error('No chunks array in response:', data);
+      throw new Error('Invalid response format: missing chunks array');
+    }
+
+    // Process chunks and ensure proper formatting
+    const newTranscriptions = data.chunks.map((chunk: any, index: number) => ({
+      id: `${Date.now()}-${index}`,
+      text: chunk.text.trim(),
+      timestamp: new Date(chunk.start * 1000), // Convert to Date object
+      startTime: chunk.start,
+      endTime: chunk.end,
+      speaker: chunk.speaker || 'Speaker 1',
+    }));
+
+    // Sort chunks by start time to ensure proper order
+    newTranscriptions.sort((a: any, b: any) => a.startTime - b.startTime);
+
+    setTranscription(prev => [...newTranscriptions, ...prev]);
+    setCurrentText('');
+    setError(null); // Clear any previous errors
   };
 
   const formatTime = (seconds: number): string => {
