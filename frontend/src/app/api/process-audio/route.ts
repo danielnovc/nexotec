@@ -9,6 +9,9 @@ export async function POST(req: Request) {
     const backendUrl = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'http://localhost:8000';
     const runpodApiKey = process.env.NEXT_PUBLIC_RUNPOD_API_KEY;
 
+    console.log('API Route - Using RunPod endpoint:', backendUrl);
+    console.log('API Route - API key present:', !!runpodApiKey);
+
     // Determine if this is a transcription or summary request
     const isSummaryRequest = action === 'summarize' && text;
     const isTranscriptionRequest = audio;
