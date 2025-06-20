@@ -22,6 +22,20 @@ export async function POST(req: Request) {
 
     console.log(isSummaryRequest ? 'Processing summary request' : 'Processing audio data');
 
+    // Prepare the request payload
+    const requestPayload = {
+      input: isSummaryRequest ? {
+        text,
+        action: 'summarize'
+      } : {
+        audio,
+        file_extension,
+        take_notes
+      }
+    };
+
+    console.log('Sending request to RunPod with payload structure:', Object.keys(requestPayload.input));
+
     // Make request to RunPod endpoint
     const response = await fetch(backendUrl, {
       method: 'POST',
@@ -29,27 +43,29 @@ export async function POST(req: Request) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${runpodApiKey}`
       },
-      body: JSON.stringify({
-        input: isSummaryRequest ? {
-          text,
-          action: 'summarize'
-        } : {
-          audio,
-          file_extension,
-          take_notes
-        }
-      }),
+      body: JSON.stringify(requestPayload),
     });
+
+    console.log('RunPod response status:', response.status);
+    console.log('RunPod response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('RunPod error response:', errorText);
       throw new Error(`Backend error: ${response.status} ${errorText}`);
     }
 
     const result = await response.json();
+    console.log('RunPod raw response:', JSON.stringify(result, null, 2));
+    console.log('RunPod response type:', typeof result);
+    console.log('RunPod response keys:', Object.keys(result));
+    console.log('RunPod result.chunks:', result.chunks);
+    console.log('RunPod result.chunks type:', typeof result.chunks);
+    console.log('RunPod result.chunks length:', result.chunks?.length);
     
     // Check if there's an error in the response
     if (result.error) {
+      console.error('RunPod returned error:', result.error);
       throw new Error(result.error);
     }
     
@@ -57,14 +73,48 @@ export async function POST(req: Request) {
       return NextResponse.json({ 
         message: 'Summary generated successfully', 
         status: 'success', 
-        summary: result.output?.summary || result.summary
+        summary: result.summary
       }, { status: 200 });
     } else {
+      // For transcription, check if we actually got transcription data
+      console.log('Checking transcription data in result:', {
+        hasChunks: !!result.chunks,
+        hasFullText: !!result.full_text,
+        resultKeys: Object.keys(result),
+        chunksType: typeof result.chunks,
+        chunksLength: result.chunks?.length
+      });
+      
+      // Handle different possible RunPod response formats
+      let transcriptionData = result;
+      
+      // Check if result is wrapped in an 'output' field (common in RunPod serverless)
+      if (result.output && (result.output.chunks || result.output.full_text)) {
+        console.log('Found transcription data in result.output');
+        transcriptionData = result.output;
+      }
+      
+      // Check if result is wrapped in a 'data' field
+      if (result.data && (result.data.chunks || result.data.full_text)) {
+        console.log('Found transcription data in result.data');
+        transcriptionData = result.data;
+      }
+      
+      console.log('Final transcription data:', transcriptionData);
+      console.log('Final chunks:', transcriptionData.chunks);
+      console.log('Final full_text:', transcriptionData.full_text);
+      
+      if (!transcriptionData.chunks && !transcriptionData.full_text) {
+        console.error('Backend returned success but no transcription data:', result);
+        throw new Error('Backend returned success but no transcription data. Check if models are properly initialized.');
+      }
+      
+      // For transcription, the RunPod response should have chunks and full_text directly
       return NextResponse.json({ 
         message: 'Audio processed successfully', 
         status: 'success', 
-        chunks: result.output?.chunks || result.chunks,
-        full_text: result.output?.full_text || result.full_text
+        chunks: transcriptionData.chunks || [],
+        full_text: transcriptionData.full_text || ''
       }, { status: 200 });
     }
   } catch (error) {

@@ -506,10 +506,21 @@ export default function TranscriptionDashboard() {
 
       const data = await response.json();
       console.log('Transcription received:', data); 
+      console.log('Data type:', typeof data);
+      console.log('Data keys:', Object.keys(data));
+      console.log('Data.chunks:', data.chunks);
+      console.log('Data.chunks type:', typeof data.chunks);
+      console.log('Data.chunks length:', data.chunks?.length);
 
       // Check if there's an error in the response
       if (data.error) {
         throw new Error(data.error);
+      }
+
+      // Check if chunks exist before trying to map
+      if (!data.chunks || !Array.isArray(data.chunks)) {
+        console.error('No chunks array in response:', data);
+        throw new Error('Invalid response format: missing chunks array');
       }
 
       // Process chunks and ensure proper formatting
