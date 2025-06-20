@@ -113,46 +113,81 @@ export async function POST(req: Request) {
     console.log('RunPod response.jobId:', result.jobId);
     console.log('RunPod response.status:', result.status);
     console.log('RunPod response.error:', result.error);
+    console.log('RunPod response.jobId type:', typeof result.jobId);
+    console.log('RunPod response.jobId truthy check:', !!result.jobId);
+    
+    // Check if RunPod wrapped the response in an 'output' field
+    let actualResult = result;
+    if (result.output) {
+      console.log('Found RunPod output wrapper, using result.output');
+      actualResult = result.output;
+      console.log('Unwrapped result keys:', Object.keys(actualResult));
+    }
     
     // Check if there's an error in the response
-    if (result.error) {
-      console.error('RunPod returned error:', result.error);
-      throw new Error(result.error);
+    if (actualResult.error) {
+      console.error('RunPod returned error:', actualResult.error);
+      throw new Error(actualResult.error);
     }
     
     if (isSummaryRequest) {
       return NextResponse.json({ 
         message: 'Summary generated successfully', 
         status: 'success', 
-        summary: result.summary
+        summary: actualResult.summary
       }, { status: 200 });
     } else {
       // For transcription, check if we got a job ID (asynchronous) or immediate result
-      if (result.jobId) {
-        // Asynchronous processing - return job ID
-        console.log('Received job ID for asynchronous processing:', result.jobId);
-        return NextResponse.json({ 
-          message: 'Job submitted successfully', 
-          status: 'processing',
-          jobId: result.jobId
-        }, { status: 202 });
+      console.log('Checking for job ID in response...');
+      console.log('actualResult.jobId exists:', !!actualResult.jobId);
+      console.log('actualResult.jobId value:', actualResult.jobId);
+      console.log('actualResult.job_id exists:', !!actualResult.job_id);
+      console.log('actualResult.job_id value:', actualResult.job_id);
+      
+      // Check for both camelCase and snake_case job ID
+      const jobId = actualResult.jobId || actualResult.job_id;
+      
+      if (jobId) {
+        // Check if this is a completed job (synchronous processing)
+        if (actualResult.status === 'COMPLETED' && actualResult.result) {
+          console.log('Received completed job result:', jobId);
+          const result = actualResult.result;
+          return NextResponse.json({ 
+            message: 'Audio processed successfully', 
+            status: 'success', 
+            chunks: result.chunks || [],
+            full_text: result.full_text || ''
+          }, { status: 200 });
+        } else if (actualResult.status === 'FAILED') {
+          console.error('Job failed:', actualResult.error);
+          throw new Error(actualResult.error || 'Job failed during processing');
+        } else {
+          // Asynchronous processing - return job ID for polling
+          console.log('Received job ID for asynchronous processing:', jobId);
+          return NextResponse.json({ 
+            message: 'Job submitted successfully', 
+            status: 'processing',
+            jobId: jobId
+          }, { status: 202 });
+        }
       } else {
         // Synchronous processing - immediate result
+        console.log('No job ID found, treating as synchronous processing');
         console.log('Received immediate result from RunPod');
         
         // Handle different possible RunPod response formats
-        let transcriptionData = result;
+        let transcriptionData = actualResult;
         
         // Check if result is wrapped in an 'output' field (common in RunPod serverless)
-        if (result.output && (result.output.chunks || result.output.full_text)) {
-          console.log('Found transcription data in result.output');
-          transcriptionData = result.output;
+        if (actualResult.output && (actualResult.output.chunks || actualResult.output.full_text)) {
+          console.log('Found transcription data in actualResult.output');
+          transcriptionData = actualResult.output;
         }
         
         // Check if result is wrapped in a 'data' field
-        if (result.data && (result.data.chunks || result.data.full_text)) {
-          console.log('Found transcription data in result.data');
-          transcriptionData = result.data;
+        if (actualResult.data && (actualResult.data.chunks || actualResult.data.full_text)) {
+          console.log('Found transcription data in actualResult.data');
+          transcriptionData = actualResult.data;
         }
         
         console.log('Final transcription data:', transcriptionData);
@@ -160,7 +195,7 @@ export async function POST(req: Request) {
         console.log('Final full_text:', transcriptionData.full_text);
         
         if (!transcriptionData.chunks && !transcriptionData.full_text) {
-          console.error('Backend returned success but no transcription data:', result);
+          console.error('Backend returned success but no transcription data:', actualResult);
           throw new Error('Backend returned success but no transcription data. Check if models are properly initialized.');
         }
         
