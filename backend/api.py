@@ -2,12 +2,18 @@ from fastapi import UploadFile, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from config import app
 from logger import setup_logger
+import os
 
 logger = setup_logger()
 logger.info("api.py loaded")
 
 # Configure maximum file size (100MB)
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB in bytes
+
+# Get Hugging Face token from environment variable
+HF_TOKEN = os.getenv("HF_TOKEN", "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")
+if not HF_TOKEN:
+    logger.warning("HF_TOKEN environment variable not set. Whisper diarization will not work.")
 
 # CORS Middleware Configuration
 app.add_middleware(
@@ -19,23 +25,30 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-# Import processing function from main.py
+# Import processing function from whip.py
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from main import process_audio_data
+from whip import process_audio_data, initialize_models
+
+# Initialize models on startup
+initialize_models(HF_TOKEN)
 
 # Import summarization function
 import summarize
 
 @app.post("/process-audio")
-async def process_audio(file: UploadFile = File(...)):
+async def process_audio(file: UploadFile = File(...), take_notes: bool = False):
     try:
-        if file.size > MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail="File too large")
+        # Read the file content to check size
         contents = await file.read()
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="File too large")
+        if not HF_TOKEN:
+            raise HTTPException(status_code=500, detail="Hugging Face token not configured")
+        
         file_extension = file.filename.split('.')[-1].lower()
-        result = process_audio_data(contents, file_extension)
+        result = process_audio_data(contents, file_extension, HF_TOKEN, take_notes)
         return result
     except Exception as e:
         logger.error(f"Error processing audio: {str(e)}", exc_info=True)
