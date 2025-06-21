@@ -22,17 +22,15 @@ export async function POST(req: Request) {
     if (jobId) {
       console.log('Checking status for job:', jobId);
       
-      const statusResponse = await fetch(backendUrl, {
-        method: 'POST',
+      // Use RunPod status endpoint
+      const statusUrl = backendUrl.replace('/run', `/status/${jobId}`);
+      console.log('Status check URL:', statusUrl);
+      
+      const statusResponse = await fetch(statusUrl, {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${runpodApiKey}`
-        },
-        body: JSON.stringify({
-          input: {
-            jobId: jobId
-          }
-        }),
+        }
       });
 
       if (!statusResponse.ok) {
@@ -44,23 +42,27 @@ export async function POST(req: Request) {
       const statusResult = await statusResponse.json();
       console.log('RunPod status result:', JSON.stringify(statusResult, null, 2));
 
+      // RunPod wraps status responses in 'output' field
+      const actualStatusResult = statusResult.output || statusResult;
+      console.log('Actual status result:', actualStatusResult);
+
       // Check if job is complete
-      if (statusResult.status === 'COMPLETED' && statusResult.result) {
-        const result = statusResult.result;
+      if (actualStatusResult.status === 'COMPLETED' && actualStatusResult.result) {
+        const result = actualStatusResult.result;
         return NextResponse.json({ 
           message: 'Job completed successfully', 
           status: 'success', 
           chunks: result.chunks || [],
           full_text: result.full_text || ''
         }, { status: 200 });
-      } else if (statusResult.status === 'IN_PROGRESS' || statusResult.status === 'WAITING_FOR_INIT') {
+      } else if (actualStatusResult.status === 'IN_PROGRESS' || actualStatusResult.status === 'IN_QUEUE' || actualStatusResult.status === 'WAITING_FOR_INIT') {
         return NextResponse.json({ 
-          message: statusResult.status === 'WAITING_FOR_INIT' ? 'Job waiting for models to initialize' : 'Job still processing', 
+          message: `Job ${actualStatusResult.status.toLowerCase().replace('_', ' ')}`, 
           status: 'processing',
           jobId: jobId
         }, { status: 202 });
-      } else if (statusResult.status === 'FAILED') {
-        throw new Error(`Job failed: ${statusResult.error || 'Unknown error'}`);
+      } else if (actualStatusResult.status === 'FAILED') {
+        throw new Error(`Job failed: ${actualStatusResult.error || 'Unknown error'}`);
       } else {
         return NextResponse.json({ 
           message: 'Job status unknown', 
@@ -117,20 +119,14 @@ export async function POST(req: Request) {
     console.log('RunPod raw response:', JSON.stringify(result, null, 2));
     console.log('RunPod response type:', typeof result);
     console.log('RunPod response keys:', Object.keys(result));
-    console.log('RunPod response.jobId:', result.jobId);
+    console.log('RunPod response.output:', result.output);
+    console.log('RunPod response.id:', result.id);
     console.log('RunPod response.status:', result.status);
-    console.log('RunPod response.error:', result.error);
-    console.log('RunPod response.jobId type:', typeof result.jobId);
-    console.log('RunPod response.jobId truthy check:', !!result.jobId);
     console.log('=== END RUNPOD RESPONSE DEBUG ===');
     
-    // Check if RunPod wrapped the response in an 'output' field
-    let actualResult = result;
-    if (result.output) {
-      console.log('Found RunPod output wrapper, using result.output');
-      actualResult = result.output;
-      console.log('Unwrapped result keys:', Object.keys(actualResult));
-    }
+    // RunPod wraps responses in an 'output' field
+    let actualResult = result.output || result;
+    console.log('Actual result after unwrapping:', actualResult);
     
     // Check if there's an error in the response
     if (actualResult.error) {
@@ -149,11 +145,11 @@ export async function POST(req: Request) {
       console.log('Checking for job ID in response...');
       console.log('actualResult.jobId exists:', !!actualResult.jobId);
       console.log('actualResult.jobId value:', actualResult.jobId);
-      console.log('actualResult.job_id exists:', !!actualResult.job_id);
-      console.log('actualResult.job_id value:', actualResult.job_id);
+      console.log('actualResult.id exists:', !!actualResult.id);
+      console.log('actualResult.id value:', actualResult.id);
       
-      // Check for both camelCase and snake_case job ID
-      const jobId = actualResult.jobId || actualResult.job_id;
+      // Check for both camelCase and snake_case job ID, and RunPod's 'id' field
+      const jobId = actualResult.jobId || actualResult.job_id || actualResult.id;
       
       if (jobId) {
         // Check if this is a completed job (synchronous processing)

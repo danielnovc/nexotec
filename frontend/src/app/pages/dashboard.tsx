@@ -47,8 +47,8 @@ interface MediaRecorderState {
 interface TranscriptionChunk {
   text: string;
   speaker: string;
-  start_time: number;
-  end_time: number;
+  start: number;
+  end: number;
 }
 
 interface TranscriptionResponse {
@@ -621,9 +621,9 @@ export default function TranscriptionDashboard() {
     const newTranscriptions = data.chunks.map((chunk: any, index: number) => ({
       id: `${Date.now()}-${index}`,
       text: chunk.text.trim(),
-      timestamp: new Date(chunk.start * 1000), // Convert to Date object
-      startTime: chunk.start,
-      endTime: chunk.end,
+      timestamp: new Date((chunk.start || chunk.start_time || 0) * 1000), // Handle both field names
+      startTime: chunk.start || chunk.start_time || 0, // Handle both field names
+      endTime: chunk.end || chunk.end_time || 0, // Handle both field names
       speaker: chunk.speaker || 'Speaker 1',
     }));
 
