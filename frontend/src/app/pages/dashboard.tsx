@@ -547,8 +547,8 @@ export default function TranscriptionDashboard() {
 
   // Poll for job completion
   const pollForResults = async (jobId: string) => {
-    const maxAttempts = 60; // 60 seconds max (1 minute)
-    const pollInterval = 2000; // 2 seconds
+    const maxAttempts = 120; // 10 minutes max (120 attempts * 5 seconds = 600 seconds = 10 minutes)
+    const pollInterval = 5000; // 5 seconds
     
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
@@ -589,7 +589,7 @@ export default function TranscriptionDashboard() {
       } catch (err) {
         console.error(`Error during polling attempt ${attempt + 1}:`, err);
         if (attempt === maxAttempts - 1) {
-          setError(err instanceof Error ? err.message : 'Polling timeout - job did not complete within expected time');
+          setError(err instanceof Error ? err.message : 'Polling timeout - job did not complete within 10 minutes');
           setIsProcessing(false); // Stop loading on final error
           throw err;
         }
@@ -597,9 +597,9 @@ export default function TranscriptionDashboard() {
       }
     }
     
-    setError('Polling timeout - job did not complete within expected time');
+    setError('Polling timeout - job did not complete within 10 minutes');
     setIsProcessing(false); // Stop loading on timeout
-    throw new Error('Polling timeout - job did not complete within expected time');
+    throw new Error('Polling timeout - job did not complete within 10 minutes');
   };
 
   // Process transcription data
