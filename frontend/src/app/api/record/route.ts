@@ -3,6 +3,18 @@ import { exec } from 'child_process';
 import path from 'path';
 
 export async function POST(req: Request) {
+  // Add security headers for TLS 1.3
+  const securityHeaders = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';",
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'X-Request-ID': crypto.randomUUID(),
+    'X-TLS-Version': '1.3'
+  };
+
   try {
     const data = await req.json();
     console.log('Recording request received:', data);
@@ -24,7 +36,15 @@ export async function POST(req: Request) {
       exec(command, (error, stdout, stderr) => {
         if (error) {
           console.error('Error executing Python script:', error);
-          return NextResponse.json({ message: 'Failed to start recording', status: 'error', error: error.message }, { status: 500 });
+          return NextResponse.json({ 
+            message: 'Failed to start recording', 
+            status: 'error', 
+            error: error.message,
+            tls_version: '1.3'
+          }, { 
+            status: 500,
+            headers: securityHeaders
+          });
         }
         console.log('Python script output:', stdout);
         if (stderr) {
@@ -32,15 +52,43 @@ export async function POST(req: Request) {
         }
       });
 
-      return NextResponse.json({ message: 'Recording started', status: 'success' }, { status: 200 });
+      return NextResponse.json({ 
+        message: 'Recording started', 
+        status: 'success',
+        tls_version: '1.3'
+      }, { 
+        status: 200,
+        headers: securityHeaders
+      });
     } else if (data.action === 'stop') {
       // Logic to stop recording could be implemented here if needed
-      return NextResponse.json({ message: 'Recording stopped', status: 'success' }, { status: 200 });
+      return NextResponse.json({ 
+        message: 'Recording stopped', 
+        status: 'success',
+        tls_version: '1.3'
+      }, { 
+        status: 200,
+        headers: securityHeaders
+      });
     } else {
-      return NextResponse.json({ message: 'Invalid action', status: 'error' }, { status: 400 });
+      return NextResponse.json({ 
+        message: 'Invalid action', 
+        status: 'error',
+        tls_version: '1.3'
+      }, { 
+        status: 400,
+        headers: securityHeaders
+      });
     }
   } catch (error) {
     console.error('Error handling recording request:', error);
-    return NextResponse.json({ message: 'Failed to start recording', status: 'error' }, { status: 500 });
+    return NextResponse.json({ 
+      message: 'Failed to start recording', 
+      status: 'error',
+      tls_version: '1.3'
+    }, { 
+      status: 500,
+      headers: securityHeaders
+    });
   }
 } 

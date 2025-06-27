@@ -23,6 +23,16 @@ import { SupabaseConnectModal } from "@/components/supabase-connect-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { useCredits } from "@/hooks/useCredits"
 import { supabase } from "@/lib/supabase"
+import { s3Storage, uploadAudioToStorage, initializeS3Storage } from "@/lib/s3-storage"
+import { uploadEncryptedAudioToStorage, downloadEncryptedAudioFromStorage } from "@/lib/encrypted-audio-storage"
+import { Switch } from "@/components/ui/switch"
+import { 
+  generateEncryptionKey, 
+  encryptTranscription, 
+  decryptTranscription,
+  isEncrypted 
+} from "@/lib/encryption"
+import { saveEncryptedTranscription, saveEncryptedNote } from "@/lib/supabase"
 
 interface Transcription {
   id: string;
@@ -75,7 +85,16 @@ const SPEAKER_COLORS = [
 
 export default function TranscriptionDashboard() {
   const { user } = useAuth()
-  const { credits, loading: creditsLoading, deductCredits, estimateCost, hasEnoughCredits } = useCredits()
+  const { 
+    credits, 
+    loading: creditsLoading, 
+    deductCredits, 
+    estimateCost, 
+    estimateFlatRateCost,
+    hasEnoughCredits, 
+    hasEnoughCreditsForFlatRate,
+    checkCreditsBeforeProcessing
+  } = useCredits()
   
   const [isRecording, setIsRecording] = useState(false)
   const [transcription, setTranscription] = useState<Transcription[]>([])
@@ -96,6 +115,11 @@ export default function TranscriptionDashboard() {
   const [error, setError] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
+  // Cost calculation state
+  const [estimatedCost, setEstimatedCost] = useState<number>(0)
+  const [actualCost, setActualCost] = useState<number>(0)
+  const [audioDuration, setAudioDuration] = useState<number>(0)
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -110,6 +134,10 @@ export default function TranscriptionDashboard() {
   const [isConnectingSupabase, setIsConnectingSupabase] = useState(false)
   const [supabaseModalOpen, setSupabaseModalOpen] = useState(false)
   const [takeNotes, setTakeNotes] = useState(false)
+  const [saveAudioToStorage, setSaveAudioToStorage] = useState(false)
+
+  // Encryption state - automatically enabled when saveTranscripts is true
+  const [encryptionKey, setEncryptionKey] = useState("")
 
   // Load toggle states from localStorage on mount
   useEffect(() => {
@@ -118,6 +146,15 @@ export default function TranscriptionDashboard() {
     setAutoDownloadTranscripts(localStorage.getItem("autoDownloadTranscripts") === "true")
     setAutoSummarize(localStorage.getItem("autoSummarize") === "true")
     setMoreThanTwoSpeakers(localStorage.getItem("moreThanTwoSpeakers") === "true")
+    setSaveAudioToStorage(localStorage.getItem("saveAudioToStorage") === "true")
+    
+    // Initialize encryption key if not already set
+    let storedKey = sessionStorage.getItem('encryption_key')
+    if (!storedKey) {
+      storedKey = generateEncryptionKey()
+      sessionStorage.setItem('encryption_key', storedKey)
+    }
+    setEncryptionKey(storedKey)
   }, [])
 
   // Persist toggle states to localStorage
@@ -136,6 +173,9 @@ export default function TranscriptionDashboard() {
   useEffect(() => {
     localStorage.setItem("moreThanTwoSpeakers", String(moreThanTwoSpeakers))
   }, [moreThanTwoSpeakers])
+  useEffect(() => {
+    localStorage.setItem("saveAudioToStorage", String(saveAudioToStorage))
+  }, [saveAudioToStorage])
 
   useEffect(() => {
     // On mount, set initial theme
@@ -366,7 +406,7 @@ export default function TranscriptionDashboard() {
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (!mediaRecorder) return;
     
     const { stream, audioContext, source, processor, audioChunks, startTime } = mediaRecorder;
@@ -412,6 +452,11 @@ export default function TranscriptionDashboard() {
     if (durationIntervalRef.current) {
       clearInterval(durationIntervalRef.current);
     }
+    
+    // Upload to Supabase Storage if enabled
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `recording-${timestamp}.wav`;
+    await uploadAudioToSupabaseStorage(wavBlob, fileName);
     
     console.log('Recording stopped, WAV file created');
   };
@@ -484,7 +529,27 @@ export default function TranscriptionDashboard() {
       // Get file extension from blob
       const fileExtension = audioBlob.type.split('/')[1] || 'wav';
       
-      console.log('Sending audio to RunPod, size:', audioBlob.size);
+      // Calculate audio duration for cost estimation
+      const audio = new Audio(URL.createObjectURL(audioBlob));
+      await new Promise((resolve) => {
+        audio.onloadedmetadata = () => {
+          setAudioDuration(audio.duration);
+          const estimatedCost = estimateCost(audio.duration);
+          setEstimatedCost(estimatedCost);
+          resolve(null);
+        };
+      });
+      
+      // Check if user has enough credits before processing
+      try {
+        await checkCreditsBeforeProcessing(audio.duration, 'transcription');
+      } catch (creditError) {
+        setError(`Insufficient credits: ${creditError instanceof Error ? creditError.message : 'Not enough credits'}`);
+        setIsProcessing(false);
+        return;
+      }
+      
+      console.log('Sending audio to RunPod, size:', audioBlob.size, 'duration:', audio.duration);
       
       // Send to our Next.js API route which will forward to RunPod
       const response = await fetch('/api/process-audio', {
@@ -496,7 +561,8 @@ export default function TranscriptionDashboard() {
           input: {
             audio: base64Audio,
             file_extension: fileExtension,
-            take_notes: takeNotes
+            take_notes: takeNotes,
+            user_id: user?.id || 'unknown'
           }
         })
       });
@@ -513,6 +579,12 @@ export default function TranscriptionDashboard() {
       // Check if there's an error in the response
       if (responseData.error) {
         throw new Error(responseData.error);
+      }
+
+      // Handle cost information from response
+      if (responseData.cost_breakdown) {
+        setActualCost(responseData.cost_breakdown.user_charge);
+        console.log('Cost breakdown:', responseData.cost_breakdown);
       }
 
       // Handle different response statuses
@@ -574,6 +646,12 @@ export default function TranscriptionDashboard() {
         const data = await response.json();
         console.log('Poll response:', data);
 
+        // Handle cost information from response
+        if (data.cost_breakdown) {
+          setActualCost(data.cost_breakdown.user_charge);
+          console.log('Cost breakdown from poll:', data.cost_breakdown);
+        }
+
         if (data.status === 'success') {
           console.log('Job completed successfully!');
           await processTranscriptionData(data);
@@ -634,6 +712,76 @@ export default function TranscriptionDashboard() {
     setCurrentText('');
     setError(null); // Clear any previous errors
     setIsProcessing(false); // Stop loading when transcription is processed successfully
+
+    // Automatically save encrypted transcription if saveTranscripts is enabled
+    if (saveTranscripts && user && encryptionKey) {
+      try {
+        const allTranscriptions = [...newTranscriptions, ...transcription];
+        const title = `Transcription ${new Date().toLocaleString()}`;
+        const duration = Math.round(audioDuration);
+        const creditsUsed = actualCost;
+
+        // Encrypt and save the transcription
+        const encryptedData = await encryptTranscription(allTranscriptions, encryptionKey);
+        
+        const { error } = await supabase
+          .from('transcriptions')
+          .insert({
+            title,
+            content: JSON.stringify(encryptedData),
+            duration,
+            credits_used: creditsUsed,
+            take_notes: takeNotes,
+            is_encrypted: true,
+            encryption_metadata: encryptedData
+          });
+
+        if (error) {
+          console.error('Error saving encrypted transcription:', error);
+          toast.error('Failed to save transcription');
+        } else {
+          toast.success('Encrypted transcription saved successfully!');
+        }
+        
+        // Automatically save encrypted notes if in notes mode
+        if (takeNotes) {
+          try {
+            const notesData = {
+              transcription: allTranscriptions,
+              mode: 'notes',
+              timestamp: new Date().toISOString(),
+              duration: duration,
+              creditsUsed: creditsUsed
+            };
+
+            // Encrypt and save the notes
+            const encryptedNotesData = await encryptTranscription(notesData, encryptionKey);
+            
+            const { error: notesError } = await supabase
+              .from('notes')
+              .insert({
+                title: `Notes ${new Date().toLocaleString()}`,
+                content: JSON.stringify(encryptedNotesData),
+                is_encrypted: true,
+                encryption_metadata: encryptedNotesData
+              });
+
+            if (notesError) {
+              console.error('Error saving encrypted notes:', notesError);
+              toast.error('Failed to save encrypted notes');
+            } else {
+              toast.success('Encrypted notes saved successfully!');
+            }
+          } catch (notesError) {
+            console.error('Error encrypting and saving notes:', notesError);
+            toast.error('Failed to save encrypted notes');
+          }
+        }
+      } catch (error) {
+        console.error('Error encrypting and saving transcription:', error);
+        toast.error('Failed to save encrypted transcription');
+      }
+    }
   };
 
   const formatTime = (seconds: number): string => {
@@ -652,6 +800,15 @@ export default function TranscriptionDashboard() {
     setError(null);
 
     try {
+      // Check if user has enough credits before processing
+      try {
+        await checkCreditsBeforeProcessing(0, 'summary');
+      } catch (creditError) {
+        setError(`Insufficient credits: ${creditError instanceof Error ? creditError.message : 'Not enough credits'}`);
+        setIsGeneratingSummary(false);
+        return;
+      }
+
       // Combine all transcription text
       const fullText = transcription.map(t => t.text).join(" ");
 
@@ -663,7 +820,8 @@ export default function TranscriptionDashboard() {
         body: JSON.stringify({
           input: {
             text: fullText,
-            action: 'summarize'
+            action: 'summarize',
+            user_id: user?.id || 'unknown'
           }
         }),
       });
@@ -680,7 +838,46 @@ export default function TranscriptionDashboard() {
         throw new Error(data.error);
       }
       
+      // Handle cost information from response
+      if (data.cost_breakdown) {
+        setActualCost(data.cost_breakdown.user_charge);
+        console.log('Summary cost breakdown:', data.cost_breakdown);
+      }
+      
       setSummary(data.summary);
+      
+      // Automatically save encrypted notes if saveTranscripts is enabled
+      if (saveTranscripts && user && encryptionKey && data.summary) {
+        try {
+          const notesData = {
+            transcription: transcription,
+            summary: data.summary,
+            timestamp: new Date().toISOString()
+          };
+
+          // Encrypt and save the notes
+          const encryptedData = await encryptTranscription(notesData, encryptionKey);
+          
+          const { error } = await supabase
+            .from('notes')
+            .insert({
+              title: `Notes ${new Date().toLocaleString()}`,
+              content: JSON.stringify(encryptedData),
+              is_encrypted: true,
+              encryption_metadata: encryptedData
+            });
+
+          if (error) {
+            console.error('Error saving encrypted notes:', error);
+            toast.error('Failed to save notes');
+          } else {
+            toast.success('Encrypted notes saved successfully!');
+          }
+        } catch (error) {
+          console.error('Error encrypting and saving notes:', error);
+          toast.error('Failed to save encrypted notes');
+        }
+      }
     } catch (err) {
       console.error('Error generating summary:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate summary');
@@ -729,11 +926,14 @@ ${summary ? `\nSUMMARY:\n${summary}` : ""}
   }
 
   const clearTranscription = () => {
-    setTranscription([])
-    setSummary("")
-    setCurrentText("")
-    setRecordingDuration(0)
-  }
+    setTranscription([]);
+    setCurrentText("");
+    setSummary("");
+    setError(null);
+    setEstimatedCost(0);
+    setActualCost(0);
+    setAudioDuration(0);
+  };
 
   const changeMic = (deviceId: string) => {
     setSelectedMic(deviceId)
@@ -798,16 +998,58 @@ ${summary ? `\nSUMMARY:\n${summary}` : ""}
   }, {} as Record<string, { color: string; align: 'left' | 'right' }>);
 
   const handleConnectSupabase = async () => {
+    setIsConnectingSupabase(true)
     try {
-      setIsConnectingSupabase(true)
-      // TODO: Implement Supabase connection logic
-      toast.success("Successfully connected to Supabase")
+      // Your Supabase connection logic here
+      setSupabaseModalOpen(true)
     } catch (error) {
-      console.error("Error connecting to Supabase:", error)
-      toast.error("Failed to connect to Supabase")
+      console.error('Error connecting to Supabase:', error)
+      toast.error('Failed to connect to Supabase')
     } finally {
       setIsConnectingSupabase(false)
     }
+  }
+
+  const uploadAudioToSupabaseStorage = async (audioBlob: Blob, fileName: string) => {
+    if (!saveAudioToStorage) return
+
+    try {
+      toast.info('Uploading audio to storage...')
+      
+      let result;
+      
+      // Use encrypted storage if encryption is enabled (when saveTranscripts is true)
+      if (saveTranscripts && encryptionKey) {
+        result = await uploadEncryptedAudioToStorage(audioBlob, fileName, encryptionKey, s3Storage);
+        if (result.success) {
+          toast.success('Encrypted audio uploaded to storage successfully');
+          console.log('Encrypted audio uploaded to:', result.fileUrl);
+          console.log('Audio metadata:', result.metadata);
+        }
+      } else {
+        // Use regular storage
+        result = await uploadAudioToStorage(audioBlob, fileName, s3Storage);
+        if (result.success) {
+          toast.success('Audio uploaded to storage successfully');
+          console.log('Audio uploaded to:', result.fileUrl);
+        }
+      }
+      
+      if (!result.success) {
+        toast.error(`Failed to upload audio: ${result.error}`);
+        console.error('Upload error:', result.error);
+      }
+    } catch (error) {
+      toast.error('Error uploading audio to storage');
+      console.error('Upload error:', error);
+    }
+  }
+
+  const handleS3ConfigSave = (config: { accessKeyId: string; secretAccessKey: string; bucketName: string }) => {
+    // Update the S3 storage instance with new credentials
+    const newStorage = initializeS3Storage(config.accessKeyId, config.secretAccessKey, config.bucketName)
+    // You might want to store this in a ref or state to use it for uploads
+    console.log('S3 configuration updated:', config)
   }
 
   return (
@@ -826,35 +1068,14 @@ ${summary ? `\nSUMMARY:\n${summary}` : ""}
         onAutoSummarizeChange={setAutoSummarize}
         moreThanTwoSpeakers={moreThanTwoSpeakers}
         onMoreThanTwoSpeakersChange={setMoreThanTwoSpeakers}
-        takeNotes={takeNotes}
-        onTakeNotesChange={setTakeNotes}
+        saveAudioToStorage={saveAudioToStorage}
+        onSaveAudioToStorageChange={setSaveAudioToStorage}
         onOpenSupabaseModal={() => setSupabaseModalOpen(true)}
+        credits={credits}
+        creditsLoading={creditsLoading}
       />
-      <SupabaseConnectModal open={supabaseModalOpen} onClose={() => setSupabaseModalOpen(false)} />
+      <SupabaseConnectModal open={supabaseModalOpen} onClose={() => setSupabaseModalOpen(false)} onS3ConfigSave={handleS3ConfigSave} />
       <main className="flex-1 overflow-y-auto p-8 flex flex-col gap-8">
-        {/* Credit Display */}
-        {user && (
-          <Card className="shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Credits
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold">{creditsLoading ? '...' : credits.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">Available credits</p>
-                </div>
-                <Badge variant="outline" className="text-sm">
-                  $0.10/min
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Recording Controls */}
         <Card className="shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
           <CardHeader>
@@ -962,14 +1183,40 @@ ${summary ? `\nSUMMARY:\n${summary}` : ""}
                 )}
               </Button>
             </div>
+            
+            {/* Note-taking Mode Toggle */}
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      {takeNotes ? "Note-taking Mode" : "Transcription Mode"}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {takeNotes 
+                        ? "Display as continuous text for note-taking" 
+                        : "Display as conversation with speaker labels"
+                      }
+                    </div>
+                  </div>
+                </div>
+                <Switch
+                  checked={takeNotes}
+                  onCheckedChange={setTakeNotes}
+                  className="data-[state=checked]:bg-blue-600"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
+        
         {/* Transcription Display */}
         <Card className="flex-1 flex flex-col shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Transcription</CardTitle>
+                <CardTitle>{takeNotes ? "Notes" : "Transcription"}</CardTitle>
                 <CardDescription>
                   {isRecording ? (
                     <div className="flex items-center gap-2">
@@ -977,7 +1224,7 @@ ${summary ? `\nSUMMARY:\n${summary}` : ""}
                       Recording in progress...
                     </div>
                   ) : (
-                    "Transcription will appear here"
+                    takeNotes ? "Notes will appear here" : "Transcription will appear here"
                   )}
                 </CardDescription>
               </div>

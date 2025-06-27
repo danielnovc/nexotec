@@ -43,9 +43,11 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import FloatingHeader from "@/components/floating-header"
 
 export default function StreamLineLanding() {
   const [isDark, setIsDark] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
 
   // Animation variants
   const fadeInUp = {
@@ -95,6 +97,12 @@ export default function StreamLineLanding() {
     } else {
       document.documentElement.classList.remove("dark");
     }
+
+    // Add scroll listener
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const toggleTheme = () => {
@@ -111,68 +119,21 @@ export default function StreamLineLanding() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <motion.header 
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
-        className="sticky top-0 z-50 w-full border-b border-border/40 bg-transparent backdrop-blur-sm"
-      >
-        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-6 md:px-10">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/logo.png"
-              alt="Nexotec AI Logo"
-              width={150}
-              height={55}
-              className="h-11 w-auto"
-            />
-          </div>
-
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
-              Features
-            </Link>
-            <Link href="#benefits" className="text-sm font-medium hover:text-primary transition-colors">
-              Benefits
-            </Link>
-            <Link href="#security" className="text-sm font-medium hover:text-primary transition-colors">
-              Security
-            </Link>
-            <Link href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">
-              Pricing
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9">
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
-            <Link href="/login">
-              <Button variant="ghost" className="hidden md:inline-flex h-9">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button className="h-9 bg-gradient-to-r from-primary to-primary/60 hover:from-primary/90 hover:to-primary/50">
-                Get Started
-              </Button>
-            </Link>
-            <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </motion.header>
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      {/* Floating Header */}
+      <FloatingHeader 
+        isDark={isDark} 
+        toggleTheme={toggleTheme} 
+        scrollY={scrollY} 
+      />
 
       {/* Hero Section */}
-      <section className="relative py-24 md:py-40 overflow-hidden">
+      <section className="relative pt-40 md:pt-56 pb-24 md:pb-40 overflow-hidden px-4 -mx-4">
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
           <div className="absolute w-[80%] h-[80%] bg-gradient-to-r from-cyan-100/80 via-purple-100/80 to-blue-100/80 rounded-full blur-3xl opacity-70 top-[-10%] left-[-20%] animate-pulse dark:from-cyan-900/20 dark:via-purple-900/20 dark:to-blue-900/20" />
           <div className="absolute w-[60%] h-[60%] bg-gradient-to-tr from-blue-50/90 via-purple-50/90 to-cyan-50/90 rounded-full blur-2xl opacity-50 bottom-[-10%] right-[-10%] animate-pulse delay-500 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-cyan-900/20" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10">
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid gap-16 lg:grid-cols-2 lg:gap-24 items-center">
             <motion.div 
               initial="hidden"
@@ -182,42 +143,41 @@ export default function StreamLineLanding() {
               className="space-y-10 relative z-10"
             >
               <motion.div variants={fadeInUp} transition={{ delay: 0.5, duration: 0.7 }} className="space-y-6">
-                <Badge variant="secondary" className="w-fit px-4 py-1.5 mx-auto lg:mx-0 bg-gradient-to-r from-primary/20 to-primary/10">
-                  🚀 Next-Gen AI Transcription
-                </Badge>
                 <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
                   Professional-Grade AI Transcription
                 </h1>
                 <p className="text-xl text-gray-900 dark:text-white max-w-[600px] leading-relaxed">
                   Transform your audio documentation with our cutting-edge AI ASR technology. 
-                  Experience 99.5% accuracy, GDPR compliance, and real-time processing for professionals across all industries.
+                  Experience 99.5% accuracy, GDPR compliance, and advanced processing for professionals across all industries.
                 </p>
               </motion.div>
 
               <motion.div variants={fadeInUp} transition={{ delay: 0.7, duration: 0.7 }} className="flex flex-col sm:flex-row gap-4">
                 <Link href="/login">
                   <Button size="lg" className="text-lg px-8 h-12 bg-gradient-to-r from-primary to-primary/60 hover:from-primary/90 hover:to-primary/50">
-                    Start Free Trial
+                    Get Started
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="text-lg px-8 h-12">
-                  Watch Demo
-                </Button>
+                <Link href="https://calendly.com/nexogenlabs/30min" target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="lg" className="text-lg px-8 h-12">
+                    Book a Demo
+                  </Button>
+                </Link>
               </motion.div>
 
               <motion.div variants={fadeInUp} transition={{ delay: 0.9, duration: 0.7 }} className="flex flex-wrap items-center gap-8 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" />
-                  <span>14-day free trial</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" />
-                  <span>No credit card required</span>
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <span>HIPAA Compliant</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-primary" />
                   <span>GDPR Compliant</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Server className="h-4 w-4 text-primary" />
+                  <span>EU-based Infrastructure</span>
                 </div>
               </motion.div>
             </motion.div>
@@ -256,9 +216,6 @@ export default function StreamLineLanding() {
               transition={{ duration: 0.7, delay: 1.5 }}
               className="text-center mb-20"
             >
-              <div className="inline-block mb-6">
-                <span className="text-cyan-400 font-mono text-sm tracking-wider bg-cyan-500/10 px-4 py-2 rounded-full">[FEATURES]</span>
-              </div>
               <h2 className="text-4xl md:text-5xl font-bold mb-8">
                 <span className={isDark ? 'text-white' : 'text-gray-900'}>
                   POWERFUL FEATURES
@@ -606,7 +563,7 @@ export default function StreamLineLanding() {
               </span>
             </h2>
             <p className="text-xl text-gray-900 dark:text-white">
-              Join forward-thinking professionals who trust Nexotec AI for secure, accurate, and real-time transcription.
+              Join forward-thinking professionals who trust Nexotec AI for secure, accurate, and reliable transcription.
               Start your free trial today and transform your audio documentation workflow.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -614,9 +571,11 @@ export default function StreamLineLanding() {
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 h-12">
-                Schedule Demo
-              </Button>
+              <Link href="https://calendly.com/nexogenlabs/30min" target="_blank" rel="noopener noreferrer">
+                <Button size="lg" variant="outline" className="text-lg px-8 h-12">
+                  Schedule Demo
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -700,7 +659,7 @@ export default function StreamLineLanding() {
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
                   Help Center
                 </Link>
-                <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/documentation" className="block text-muted-foreground hover:text-foreground transition-colors">
                   Documentation
                 </Link>
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">

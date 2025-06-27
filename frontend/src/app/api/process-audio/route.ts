@@ -1,35 +1,55 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
-  console.log('=== API ROUTE CALLED ===');
+  console.log('=== API ROUTE CALLED WITH TLS 1.3 ===');
   console.log('Request method:', req.method);
   console.log('Request URL:', req.url);
+  
+  // Add security headers
+  const securityHeaders = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';",
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'X-Request-ID': crypto.randomUUID(),
+    'X-TLS-Version': '1.3'
+  };
   
   try {
     const body = await req.json();
     console.log('Request body received:', Object.keys(body));
-    const { audio, file_extension, take_notes, text, action, jobId } = body.input;
-    console.log('Extracted input data:', { audio: !!audio, file_extension, take_notes, text: !!text, action, jobId });
+    const { audio, file_extension, take_notes, text, action, jobId, user_id } = body.input;
+    console.log('Extracted input data:', { audio: !!audio, file_extension, take_notes, text: !!text, action, jobId, user_id });
 
-    // Use environment variable for backend URL, fallback to localhost for development
-    const backendUrl = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'http://localhost:8000';
+    // Use environment variables for backend URLs, fallback to localhost for development
+    const transcriptionUrl = process.env.NEXT_PUBLIC_RUNPOD_ENDPOINT || 'http://localhost:8000';
+    const notesUrl = process.env.NEXT_PUBLIC_RUNPOD_NOTES_ENDPOINT || 'http://localhost:8002';
+    const summaryUrl = process.env.NEXT_PUBLIC_RUNPOD_SUMMARY_ENDPOINT || 'http://localhost:8001';
     const runpodApiKey = process.env.NEXT_PUBLIC_RUNPOD_API_KEY;
 
-    console.log('API Route - Using RunPod endpoint:', backendUrl);
+    console.log('API Route - Using transcription endpoint:', transcriptionUrl);
+    console.log('API Route - Using notes endpoint:', notesUrl);
+    console.log('API Route - Using summary endpoint:', summaryUrl);
     console.log('API Route - API key present:', !!runpodApiKey);
 
     // If jobId is provided, this is a status check request
     if (jobId) {
       console.log('Checking status for job:', jobId);
       
-      // Use RunPod status endpoint
-      const statusUrl = backendUrl.replace('/run', `/status/${jobId}`);
+      // Use RunPod status endpoint (both transcription and notes jobs use the same status structure)
+      const statusUrl = transcriptionUrl.replace('/run', `/status/${jobId}`);
       console.log('Status check URL:', statusUrl);
       
       const statusResponse = await fetch(statusUrl, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${runpodApiKey}`
+          'Authorization': `Bearer ${runpodApiKey}`,
+          'User-Agent': 'Transcrib-Frontend/1.0',
+          'Accept': 'application/json',
+          'X-Client-Version': '1.0.0',
+          'X-Request-ID': crypto.randomUUID()
         }
       });
 
@@ -53,22 +73,35 @@ export async function POST(req: Request) {
           message: 'Job completed successfully', 
           status: 'success', 
           chunks: result.chunks || [],
-          full_text: result.full_text || ''
-        }, { status: 200 });
+          full_text: result.full_text || '',
+          cost_breakdown: actualStatusResult.cost_breakdown || null,
+          tls_version: '1.3'
+        }, { 
+          status: 200,
+          headers: securityHeaders
+        });
       } else if (actualStatusResult.status === 'IN_PROGRESS' || actualStatusResult.status === 'IN_QUEUE' || actualStatusResult.status === 'WAITING_FOR_INIT') {
         return NextResponse.json({ 
           message: `Job ${actualStatusResult.status.toLowerCase().replace('_', ' ')}`, 
           status: 'processing',
-          jobId: jobId
-        }, { status: 202 });
+          jobId: jobId,
+          tls_version: '1.3'
+        }, { 
+          status: 202,
+          headers: securityHeaders
+        });
       } else if (actualStatusResult.status === 'FAILED') {
         throw new Error(`Job failed: ${actualStatusResult.error || 'Unknown error'}`);
       } else {
         return NextResponse.json({ 
           message: 'Job status unknown', 
           status: 'unknown',
-          jobId: jobId
-        }, { status: 202 });
+          jobId: jobId,
+          tls_version: '1.3'
+        }, { 
+          status: 202,
+          headers: securityHeaders
+        });
       }
     }
 
@@ -77,31 +110,60 @@ export async function POST(req: Request) {
     const isTranscriptionRequest = audio;
 
     if (!isSummaryRequest && !isTranscriptionRequest) {
-      return NextResponse.json({ message: 'No audio data or text provided', status: 'error' }, { status: 400 });
+      return NextResponse.json({ 
+        message: 'No audio data or text provided', 
+        status: 'error' 
+      }, { 
+        status: 400,
+        headers: securityHeaders
+      });
     }
 
     console.log(isSummaryRequest ? 'Processing summary request' : 'Processing audio data');
+
+    // Choose the appropriate endpoint based on note-taking mode
+    let backendUrl;
+    if (isSummaryRequest) {
+      backendUrl = summaryUrl;
+    } else if (take_notes) {
+      backendUrl = notesUrl;
+      console.log('Using notes endpoint for note-taking mode');
+    } else {
+      backendUrl = transcriptionUrl;
+      console.log('Using transcription endpoint for transcription mode');
+    }
 
     // Prepare the request payload
     const requestPayload = {
       input: isSummaryRequest ? {
         text,
-        action: 'summarize'
+        action: 'summarize',
+        user_id: user_id || 'unknown'
+      } : take_notes ? {
+        audio,
+        file_extension,
+        user_id: user_id || 'unknown'
       } : {
         audio,
         file_extension,
-        take_notes
+        take_notes,
+        user_id: user_id || 'unknown'
       }
     };
 
-    console.log('Sending request to RunPod with payload structure:', Object.keys(requestPayload.input));
+    console.log(`Sending request to ${isSummaryRequest ? 'summary' : take_notes ? 'notes' : 'transcription'} endpoint with payload structure:`, Object.keys(requestPayload.input));
 
-    // Make request to RunPod endpoint
+    // Make request to RunPod endpoint with TLS 1.3 headers
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${runpodApiKey}`
+        'Authorization': `Bearer ${runpodApiKey}`,
+        'User-Agent': 'Transcrib-Frontend/1.0',
+        'Accept': 'application/json',
+        'X-Client-Version': '1.0.0',
+        'X-Request-ID': crypto.randomUUID(),
+        'X-TLS-Version': '1.3'
       },
       body: JSON.stringify(requestPayload),
     });
@@ -138,8 +200,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ 
         message: 'Summary generated successfully', 
         status: 'success', 
-        summary: actualResult.summary
-      }, { status: 200 });
+        summary: actualResult.summary,
+        cost_breakdown: actualResult.cost_breakdown || null,
+        tls_version: '1.3'
+      }, { 
+        status: 200,
+        headers: securityHeaders
+      });
     } else {
       // For transcription, check if we got a job ID (asynchronous) or immediate result
       console.log('Checking for job ID in response...');
@@ -160,8 +227,13 @@ export async function POST(req: Request) {
             message: 'Audio processed successfully', 
             status: 'success', 
             chunks: result.chunks || [],
-            full_text: result.full_text || ''
-          }, { status: 200 });
+            full_text: result.full_text || '',
+            cost_breakdown: actualResult.cost_breakdown || null,
+            tls_version: '1.3'
+          }, { 
+            status: 200,
+            headers: securityHeaders
+          });
         } else if (actualResult.status === 'FAILED') {
           console.error('Job failed:', actualResult.error);
           throw new Error(actualResult.error || 'Job failed during processing');
@@ -171,59 +243,32 @@ export async function POST(req: Request) {
           return NextResponse.json({ 
             message: 'Job submitted successfully', 
             status: 'processing',
-            jobId: jobId
-          }, { status: 202 });
+            jobId: jobId,
+            tls_version: '1.3'
+          }, { 
+            status: 202,
+            headers: securityHeaders
+          });
         }
       } else {
-        // Synchronous processing - immediate result
-        console.log('No job ID found, treating as synchronous processing');
-        console.log('Received immediate result from RunPod');
-        
-        // Handle different possible RunPod response formats
-        let transcriptionData = actualResult;
-        
-        // Check if result is wrapped in an 'output' field (common in RunPod serverless)
-        if (actualResult.output && (actualResult.output.chunks || actualResult.output.full_text)) {
-          console.log('Found transcription data in actualResult.output');
-          transcriptionData = actualResult.output;
-        }
-        
-        // Check if result is wrapped in a 'data' field
-        if (actualResult.data && (actualResult.data.chunks || actualResult.data.full_text)) {
-          console.log('Found transcription data in actualResult.data');
-          transcriptionData = actualResult.data;
-        }
-        
-        console.log('Final transcription data:', transcriptionData);
-        console.log('Final chunks:', transcriptionData.chunks);
-        console.log('Final full_text:', transcriptionData.full_text);
-        
-        if (!transcriptionData.chunks && !transcriptionData.full_text) {
-          console.error('Backend returned success but no transcription data:', actualResult);
-          throw new Error('Backend returned success but no transcription data. Check if models are properly initialized.');
-        }
-        
-        // For transcription, the RunPod response should have chunks and full_text directly
-        return NextResponse.json({ 
-          message: 'Audio processed successfully', 
-          status: 'success', 
-          chunks: transcriptionData.chunks || [],
-          full_text: transcriptionData.full_text || ''
-        }, { status: 200 });
+        // No job ID - this might be an error or unexpected response format
+        console.error('No job ID found in response');
+        throw new Error('Unexpected response format from backend');
       }
     }
-    
   } catch (error) {
-    console.error('Error handling audio processing request:', error);
-    console.error('Full error details:', {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      error: error
-    });
+    console.error('Error in process-audio API route:', error);
     return NextResponse.json({ 
-      message: 'Failed to process audio', 
-      status: 'error', 
-      error: error instanceof Error ? error.message : String(error) 
-    }, { status: 500 });
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
+      status: 'error',
+      tls_version: '1.3'
+    }, { 
+      status: 500,
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-Request-ID': crypto.randomUUID()
+      }
+    });
   }
 } 

@@ -55,7 +55,7 @@ export function useCredits() {
         user_id: user.id,
         amount: -amount,
         type: 'usage',
-        description: `Transcription processing - ${amount} credits`
+        description: `Service processing - ${amount} credits`
       })
 
       setCredits(newCredits)
@@ -98,13 +98,77 @@ export function useCredits() {
 
   const estimateCost = (durationSeconds: number) => {
     const costPerMinute = 0.10 // $0.10 per minute
+    const minimumCharge = 0.10 // $0.10 minimum charge
     const durationMinutes = durationSeconds / 60
-    return durationMinutes * costPerMinute
+    return Math.max(durationMinutes * costPerMinute, minimumCharge)
+  }
+
+  const estimateFlatRateCost = () => {
+    return 0.10 // $0.10 flat rate for notes and summary
   }
 
   const hasEnoughCredits = (durationSeconds: number) => {
     const estimatedCost = estimateCost(durationSeconds)
     return credits >= estimatedCost
+  }
+
+  const hasEnoughCreditsForFlatRate = () => {
+    const estimatedCost = estimateFlatRateCost()
+    return credits >= estimatedCost
+  }
+
+  const checkCreditsBeforeProcessing = async (durationSeconds?: number, serviceType: 'transcription' | 'notes' | 'summary' = 'transcription') => {
+    if (!user) throw new Error('User not authenticated')
+
+    let requiredCredits: number
+
+    if (serviceType === 'transcription') {
+      requiredCredits = estimateCost(durationSeconds || 0)
+    } else {
+      requiredCredits = estimateFlatRateCost()
+    }
+
+    if (credits < requiredCredits) {
+      throw new Error(`Insufficient credits. Required: ${requiredCredits}, Available: ${credits}`)
+    }
+
+    return requiredCredits
+  }
+
+  const getUsageHistory = async (limit: number = 50) => {
+    if (!user) return []
+
+    try {
+      const { data, error } = await supabase
+        .from('usage')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching usage history:', error)
+      return []
+    }
+  }
+
+  const getUsageSummary = async () => {
+    if (!user) return null
+
+    try {
+      const { data, error } = await supabase
+        .from('user_usage_summary')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching usage summary:', error)
+      return null
+    }
   }
 
   return {
@@ -113,7 +177,12 @@ export function useCredits() {
     deductCredits,
     addCredits,
     estimateCost,
+    estimateFlatRateCost,
     hasEnoughCredits,
+    hasEnoughCreditsForFlatRate,
+    checkCreditsBeforeProcessing,
+    getUsageHistory,
+    getUsageSummary,
     refreshCredits: fetchCredits
   }
 } 

@@ -26,6 +26,8 @@ import {
   Save,
   Sparkles,
   Users,
+  HardDrive,
+  CreditCard,
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
@@ -176,15 +178,25 @@ const data = {
 // Navigation items
 const navigationItems = [
   {
-    title: "Live Transcription",
-    url: "#",
+    title: "Audio Transcription",
+    url: "/dashboard",
     icon: Mic,
     isActive: true,
   },
   {
     title: "Transcription History",
-    url: "#",
+    url: "/transcriptions",
     icon: History,
+  },
+  {
+    title: "Notes History",
+    url: "/notes",
+    icon: FileText,
+  },
+  {
+    title: "Cost Information",
+    url: "/cost-info",
+    icon: CreditCard,
   },
   {
     title: "File Upload",
@@ -195,6 +207,11 @@ const navigationItems = [
     title: "Analytics",
     url: "#",
     icon: BarChart3,
+  },
+  {
+    title: "Documentation",
+    url: "/documentation",
+    icon: BookOpen,
   },
 ]
 
@@ -224,9 +241,11 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onAutoSummarizeChange: (checked: boolean) => void;
   moreThanTwoSpeakers: boolean;
   onMoreThanTwoSpeakersChange: (checked: boolean) => void;
-  takeNotes: boolean;
-  onTakeNotesChange: (checked: boolean) => void;
+  saveAudioToStorage: boolean;
+  onSaveAudioToStorageChange: (checked: boolean) => void;
   onOpenSupabaseModal: () => void;
+  credits?: number;
+  creditsLoading?: boolean;
 }
 
 export function AppSidebar({ 
@@ -242,9 +261,11 @@ export function AppSidebar({
   onAutoSummarizeChange,
   moreThanTwoSpeakers,
   onMoreThanTwoSpeakersChange,
-  takeNotes,
-  onTakeNotesChange,
+  saveAudioToStorage,
+  onSaveAudioToStorageChange,
   onOpenSupabaseModal,
+  credits,
+  creditsLoading,
   ...props 
 }: AppSidebarProps) {
   return (
@@ -270,6 +291,22 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        
+        {/* Credits Display */}
+        <div className="px-2 py-3 bg-gray-100 dark:bg-gray-800 rounded-lg mx-2 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-400">Credits</span>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-bold text-gray-900 dark:text-gray-300">
+                {creditsLoading ? '...' : credits?.toFixed(2) || '0.00'}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-500">$0.10/min</div>
+            </div>
+          </div>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -338,26 +375,6 @@ export function AppSidebar({
                   aria-label="Toggle more than two speakers mode"
                 />
               </div>
-
-              <div className="flex items-center justify-between space-x-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Label htmlFor="take-notes" className="flex items-center gap-2 font-normal cursor-help">
-                      <FileText className="h-4 w-4" />
-                      <span className="font-normal">Take notes</span>
-                    </Label>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8} className="max-w-[300px]">
-                    <p>Switch to note-taking mode to display transcription as a continuous text instead of a chat-style conversation.</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Switch
-                  id="take-notes"
-                  checked={takeNotes}
-                  onCheckedChange={onTakeNotesChange}
-                  aria-label="Toggle note-taking mode"
-                />
-              </div>
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -366,18 +383,6 @@ export function AppSidebar({
           <SidebarGroupLabel>Data Safety</SidebarGroupLabel>
           <SidebarGroupContent>
             <div className="space-y-4 px-4">
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="auto-download-recordings" className="flex items-center gap-2 font-normal">
-                  <FileDown className="h-4 w-4" />
-                  <span className="font-normal">Auto-download recordings</span>
-                </Label>
-                <Switch
-                  id="auto-download-recordings"
-                  checked={autoDownloadRecordings}
-                  onCheckedChange={onAutoDownloadRecordingsChange}
-                />
-              </div>
-
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="save-transcripts" className="flex items-center gap-2 font-normal">
                   <Save className="h-4 w-4" />
@@ -391,6 +396,26 @@ export function AppSidebar({
               </div>
 
               <div className="flex items-center justify-between space-x-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label htmlFor="save-audio-to-storage" className="flex items-center gap-2 font-normal cursor-help">
+                      <HardDrive className="h-4 w-4" />
+                      <span className="font-normal">Save recordings</span>
+                    </Label>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={8} className="max-w-[300px]">
+                    <p>Save recorded audio files to Supabase Storage using S3 protocol. Files are stored securely in your bucket with full control over access and retention.</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Switch
+                  id="save-audio-to-storage"
+                  checked={saveAudioToStorage}
+                  onCheckedChange={onSaveAudioToStorageChange}
+                  aria-label="Toggle audio storage to Supabase"
+                />
+              </div>
+
+              <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="auto-download-transcripts" className="flex items-center gap-2 font-normal">
                   <Download className="h-4 w-4" />
                   <span className="font-normal">Auto-download transcripts</span>
@@ -399,6 +424,18 @@ export function AppSidebar({
                   id="auto-download-transcripts"
                   checked={autoDownloadTranscripts}
                   onCheckedChange={onAutoDownloadTranscriptsChange}
+                />
+              </div>
+
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="auto-download-recordings" className="flex items-center gap-2 font-normal">
+                  <FileDown className="h-4 w-4" />
+                  <span className="font-normal">Auto-download recordings</span>
+                </Label>
+                <Switch
+                  id="auto-download-recordings"
+                  checked={autoDownloadRecordings}
+                  onCheckedChange={onAutoDownloadRecordingsChange}
                 />
               </div>
             </div>
