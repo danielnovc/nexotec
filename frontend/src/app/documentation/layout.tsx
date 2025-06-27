@@ -111,7 +111,7 @@ const data = {
       items: [
         {
           title: "Encryption",
-          url: "/documentation#encryption",
+          url: "/documentation/encryption",
         },
         {
           title: "Data Storage",
