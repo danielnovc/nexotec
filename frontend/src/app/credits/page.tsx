@@ -20,6 +20,7 @@ export default function CreditsPage() {
   const [autoDownloadTranscripts, setAutoDownloadTranscripts] = useState(false)
   const [autoSummarize, setAutoSummarize] = useState(false)
   const [moreThanTwoSpeakers, setMoreThanTwoSpeakers] = useState(false)
+  const [saveAudioToStorage, setSaveAudioToStorage] = useState(false)
   const [takeNotes, setTakeNotes] = useState(false)
   const [supabaseModalOpen, setSupabaseModalOpen] = useState(false)
 
@@ -61,9 +62,11 @@ export default function CreditsPage() {
           onAutoSummarizeChange={setAutoSummarize}
           moreThanTwoSpeakers={moreThanTwoSpeakers}
           onMoreThanTwoSpeakersChange={setMoreThanTwoSpeakers}
-          takeNotes={takeNotes}
-          onTakeNotesChange={setTakeNotes}
+          saveAudioToStorage={saveAudioToStorage}
+          onSaveAudioToStorageChange={setSaveAudioToStorage}
           onOpenSupabaseModal={() => setSupabaseModalOpen(true)}
+          credits={credits}
+          creditsLoading={loading}
         />
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-6xl mx-auto space-y-8">

@@ -9,8 +9,8 @@ export function middleware(request: NextRequest) {
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
-    'https://your-domain.com', // Replace with your actual domain
-    'https://www.your-domain.com', // Replace with your actual domain
+    'https://nexogen.app',
+    'https://www.nexogen.app',
   ]
 
   // Check if origin is allowed
