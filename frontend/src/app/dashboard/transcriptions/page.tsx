@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { EditableText } from "@/components/editable-text"
 import { 
   History, 
   Download, 
@@ -17,7 +18,11 @@ import {
   AlertCircle,
   CheckCircle,
   Lock,
-  Shield
+  Shield,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useCredits } from "@/hooks/useCredits"
@@ -27,8 +32,13 @@ import { decryptTranscription } from "@/lib/encryption"
 interface Transcription {
   id: string
   user_id: string
+  title: string
   content: any
+  duration: number
+  credits_used: number
+  take_notes: boolean
   is_encrypted: boolean
+  encryption_metadata?: any
   created_at: string
   updated_at: string
   decrypted?: boolean
@@ -42,6 +52,7 @@ export default function TranscriptionsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [encryptionKey, setEncryptionKey] = useState("")
+  const [expandedTranscription, setExpandedTranscription] = useState<string | null>(null)
 
   useEffect(() => {
     // Get encryption key from session storage
@@ -106,6 +117,30 @@ export default function TranscriptionsPage() {
     })
   }
 
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+
+  const formatTimestamp = (timestamp: Date | number | undefined): string => {
+    if (!timestamp) return '';
+    
+    // If it's a number (seconds), convert to minutes and seconds
+    if (typeof timestamp === 'number') {
+      const minutes = Math.floor(timestamp / 60);
+      const seconds = Math.floor(timestamp % 60);
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // If it's a Date object, format it
+    if (timestamp instanceof Date) {
+      return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    return '';
+  }
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -161,14 +196,234 @@ export default function TranscriptionsPage() {
   }
 
   const getTranscriptionText = (content: any) => {
-    if (typeof content === 'object' && content.chunks) {
-      return content.chunks.map((chunk: any) => chunk.text).join(' ')
-    } else if (typeof content === 'object' && content.full_text) {
-      return content.full_text
+    if (!content) return 'No content available'
+    
+    // Handle decrypted content structure
+    if (Array.isArray(content)) {
+      // If content is an array of transcription objects
+      return content.map((item: any) => item.text || item).join(' ')
+    } else if (typeof content === 'object') {
+      if (content.chunks && Array.isArray(content.chunks)) {
+        // Handle chunks format
+        return content.chunks.map((chunk: any) => chunk.text).join(' ')
+      } else if (content.full_text) {
+        // Handle full_text format
+        return content.full_text
+      } else if (content.transcription && Array.isArray(content.transcription)) {
+        // Handle transcription array within object
+        return content.transcription.map((item: any) => item.text || item).join(' ')
+      } else {
+        // Try to extract text from any object structure
+        return JSON.stringify(content, null, 2)
+      }
     } else if (typeof content === 'string') {
       return content
     }
+    
     return 'No content available'
+  }
+
+  const getFormattedTranscription = (content: any) => {
+    if (!content) return 'No content available'
+    
+    if (Array.isArray(content)) {
+      return content.map((item: any, index: number) => {
+        const timestamp = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : ''
+        const speaker = item.speaker || 'Unknown'
+        return `[${timestamp}] ${speaker}: ${item.text || item}`
+      }).join('\n\n')
+    } else if (typeof content === 'object') {
+      if (content.chunks && Array.isArray(content.chunks)) {
+        return content.chunks.map((chunk: any) => 
+          `[${chunk.speaker || 'Unknown'}] ${chunk.text}`
+        ).join('\n\n')
+      } else if (content.full_text) {
+        return content.full_text
+      } else if (content.transcription && Array.isArray(content.transcription)) {
+        return content.transcription.map((item: any, index: number) => {
+          const timestamp = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : ''
+          const speaker = item.speaker || 'Unknown'
+          return `[${timestamp}] ${speaker}: ${item.text || item}`
+        }).join('\n\n')
+      }
+    }
+    
+    return getTranscriptionText(content)
+  }
+
+  const generatePDF = async (transcription: Transcription) => {
+    try {
+      // Import jsPDF dynamically
+      const { jsPDF } = await import('jspdf')
+      const html2canvas = (await import('html2canvas')).default
+
+      // Create a temporary container for the PDF content
+      const pdfContainer = document.createElement('div')
+      pdfContainer.style.position = 'absolute'
+      pdfContainer.style.left = '-9999px'
+      pdfContainer.style.top = '0'
+      pdfContainer.style.width = '800px'
+      pdfContainer.style.padding = '40px'
+      pdfContainer.style.backgroundColor = '#ffffff'
+      pdfContainer.style.fontFamily = 'Arial, sans-serif'
+      pdfContainer.style.color = '#000000'
+      
+      // Parse the transcription content
+      let transcriptionData: any[] = []
+      let isNotesMode = false
+      
+      if (typeof transcription.content === 'string') {
+        try {
+          const parsed = JSON.parse(transcription.content)
+          if (Array.isArray(parsed)) {
+            transcriptionData = parsed
+          } else if (parsed.transcription && Array.isArray(parsed.transcription)) {
+            transcriptionData = parsed.transcription
+            isNotesMode = true
+          } else if (parsed.chunks && Array.isArray(parsed.chunks)) {
+            transcriptionData = parsed.chunks
+          }
+        } catch {
+          transcriptionData = [{ text: transcription.content, speaker: 'Unknown' }]
+        }
+      } else if (Array.isArray(transcription.content)) {
+        transcriptionData = transcription.content
+      }
+      
+      // Create the PDF content HTML
+      const pdfContent = `
+        <div style="max-width: 720px; margin: 0 auto;">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e5e7eb; padding-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
+              <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-weight: bold; font-size: 16px;">N</span>
+              </div>
+              <h1 style="margin: 0; font-size: 28px; font-weight: bold; color: #1f2937;">Nexogen AI</h1>
+            </div>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: #374151;">Transcription Report</h2>
+            <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280;">
+              Generated on ${new Date(transcription.created_at).toLocaleDateString()} at ${new Date(transcription.created_at).toLocaleTimeString()}
+            </p>
+          </div>
+
+          <!-- Metadata -->
+          <div style="display: flex; justify-content: space-between; margin-bottom: 30px; padding: 16px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Duration</div>
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${transcription.duration ? formatDuration(transcription.duration) : 'N/A'}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Words</div>
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${transcriptionData.reduce((acc, item) => acc + (item.text?.split(' ').length || 0), 0)}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Speakers</div>
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${new Set(transcriptionData.map(item => item.speaker || 'Unknown')).size}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Cost</div>
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">$${transcription.credits_used?.toFixed(2) || '0.00'}</div>
+            </div>
+          </div>
+
+          <!-- Transcription Section -->
+          <div style="margin-bottom: 30px;">
+            <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px;">
+              <span style="width: 16px; height: 16px; background-color: #10b981; border-radius: 4px;"></span>
+              ${transcription.take_notes ? 'Notes' : 'Transcription'}
+            </h3>
+            <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; min-height: 200px;">
+              ${transcription.take_notes ? 
+                // Notes mode - continuous text
+                transcriptionData.map((item, index) => `
+                  <div style="margin-bottom: 16px;">
+                    <div style="font-size: 14px; line-height: 1.6; color: #1f2937; white-space: pre-line;">${item.text}</div>
+                    <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">${item.start ? formatTimestamp(item.start) : ''}</div>
+                  </div>
+                `).join('') :
+                // Transcription mode - bubble style
+                transcriptionData.map((item, index) => {
+                  const speaker = item.speaker || 'Unknown';
+                  const speakerNumber = speaker.replace(/[^0-9]/g, '');
+                  const displaySpeaker = speakerNumber ? `Speaker ${parseInt(speakerNumber) + 1}` : speaker;
+                  const speakerColors = ['#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b', '#ef4444', '#06b6d4', '#f97316'];
+                  const color = speakerColors[index % speakerColors.length];
+                  const align = index % 2 === 0 ? 'left' : 'right';
+                  
+                  return `
+                    <div style="display: flex; justify-content: ${align === 'right' ? 'flex-end' : 'flex-start'}; margin-bottom: 16px;">
+                      <div style="max-width: 70%; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                          <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${color}; flex-shrink: 0; margin-top: 2px;"></div>
+                          <div style="flex: 1;">
+                            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px;">${displaySpeaker}</div>
+                            <div style="font-size: 14px; line-height: 1.5; color: #1f2937; white-space: pre-line;">${item.text}</div>
+                            <div style="font-size: 10px; color: #9ca3af; margin-top: 4px;">${item.start ? formatTimestamp(item.start) : ''}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')
+              }
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+            <p style="margin: 0;">Generated by Nexogen AI Transcription Service</p>
+            <p style="margin: 4px 0 0 0;">All transcriptions are processed with advanced AI technology</p>
+          </div>
+        </div>
+      `
+      
+      pdfContainer.innerHTML = pdfContent
+      document.body.appendChild(pdfContainer)
+
+      // Convert to canvas
+      const canvas = await html2canvas(pdfContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 800,
+        height: pdfContainer.scrollHeight
+      })
+
+      // Remove the temporary container
+      document.body.removeChild(pdfContainer)
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const imgWidth = 210 // A4 width in mm
+      const pageHeight = 295 // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      let heightLeft = imgHeight
+
+      let position = 0
+
+      // Add first page
+      pdf.addImage(canvas, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(canvas, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+
+      // Save the PDF
+      const filename = `transcription-${transcription.id.slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`
+      pdf.save(filename)
+
+      toast.success('PDF generated successfully!')
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      toast.error('Failed to generate PDF')
+    }
   }
 
   if (!user) {
@@ -245,91 +500,162 @@ export default function TranscriptionsPage() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {transcriptions.map((transcription) => (
-              <Card key={transcription.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2">
-                        <FileText className="h-5 w-5" />
-                        Transcription #{transcription.id.slice(-8)}
-                        {transcription.is_encrypted && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            <Lock className="h-3 w-3" />
-                            Encrypted
-                          </Badge>
-                        )}
-                        {transcription.decrypted && (
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            <CheckCircle className="h-3 w-3" />
-                            Decrypted
-                          </Badge>
-                        )}
-                        {transcription.error && (
-                          <Badge variant="destructive" className="flex items-center gap-1">
-                            <AlertCircle className="h-3 w-3" />
-                            Error
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-4 mt-2">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {formatDate(transcription.created_at)}
-                        </span>
-                        {getSpeakerCount(transcription.content) > 0 && (
+            {transcriptions.map((transcription) => {
+              const isExpanded = expandedTranscription === transcription.id
+              const transcriptionText = getTranscriptionText(transcription.content)
+              const formattedText = getFormattedTranscription(transcription.content)
+              
+              return (
+                <Card key={transcription.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          {transcription.title || `Transcription #${transcription.id.slice(-8)}`}
+                          {transcription.is_encrypted && (
+                            <Badge variant="secondary" className="flex items-center gap-1">
+                              <Lock className="h-3 w-3" />
+                              Encrypted
+                            </Badge>
+                          )}
+                          {transcription.decrypted && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <CheckCircle className="h-3 w-3" />
+                              Decrypted
+                            </Badge>
+                          )}
+                          {transcription.error && (
+                            <Badge variant="destructive" className="flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              Error
+                            </Badge>
+                          )}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-4 mt-2">
                           <span className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            {getSpeakerCount(transcription.content)} speakers
+                            <Calendar className="h-4 w-4" />
+                            {formatDate(transcription.created_at)}
                           </span>
-                        )}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => copyToClipboard(getTranscriptionText(transcription.content))}
-                        disabled={!!transcription.error}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => downloadTranscription(transcription, 'txt')}
-                        disabled={!!transcription.error}
-                      >
-                        <Download className="h-4 w-4" />
-                        TXT
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => downloadTranscription(transcription, 'json')}
-                        disabled={!!transcription.error}
-                      >
-                        <Download className="h-4 w-4" />
-                        JSON
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {transcription.error ? (
-                    <div className="text-red-600 dark:text-red-400 text-sm">
-                      Error: {transcription.error}
-                    </div>
-                  ) : (
-                    <ScrollArea className="h-32 w-full">
-                      <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {getTranscriptionText(transcription.content)}
+                          {transcription.duration && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              {formatDuration(transcription.duration)}
+                            </span>
+                          )}
+                          {transcription.credits_used && (
+                            <span className="flex items-center gap-1">
+                              <Shield className="h-4 w-4" />
+                              ${transcription.credits_used.toFixed(2)}
+                            </span>
+                          )}
+                          {getSpeakerCount(transcription.content) > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              {getSpeakerCount(transcription.content)} speakers
+                            </span>
+                          )}
+                        </CardDescription>
                       </div>
-                    </ScrollArea>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setExpandedTranscription(isExpanded ? null : transcription.id)}
+                          disabled={!!transcription.error}
+                        >
+                          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {isExpanded ? 'Hide' : 'View'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyToClipboard(formattedText)}
+                          disabled={!!transcription.error}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => downloadTranscription(transcription, 'txt')}
+                          disabled={!!transcription.error}
+                        >
+                          <Download className="h-4 w-4" />
+                          TXT
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => downloadTranscription(transcription, 'json')}
+                          disabled={!!transcription.error}
+                        >
+                          <Download className="h-4 w-4" />
+                          JSON
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => generatePDF(transcription)}
+                          disabled={!!transcription.error}
+                        >
+                          <Download className="h-4 w-4" />
+                          PDF
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {transcription.error ? (
+                      <div className="text-red-600 dark:text-red-400 text-sm">
+                        Error: {transcription.error}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Preview */}
+                        <div>
+                          <ScrollArea className="h-20 w-full">
+                            <EditableText
+                              text={transcriptionText.length > 200 
+                                ? `${transcriptionText.substring(0, 200)}...` 
+                                : transcriptionText
+                              }
+                              itemId={transcription.id}
+                              itemType="transcription"
+                              encryptionKey={encryptionKey}
+                              onUpdate={loadTranscriptions}
+                              className="text-sm text-muted-foreground"
+                            />
+                          </ScrollArea>
+                        </div>
+                        
+                        {/* Expanded View */}
+                        {isExpanded && (
+                          <div className="border-t pt-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-medium">Full Transcription</h4>
+                              <Badge variant="outline" className="text-xs">
+                                {transcriptionText.split(' ').length} words
+                              </Badge>
+                            </div>
+                            <ScrollArea className="h-64 w-full border rounded-md p-4">
+                              <EditableText
+                                text={formattedText}
+                                itemId={transcription.id}
+                                itemType="transcription"
+                                encryptionKey={encryptionKey}
+                                onUpdate={loadTranscriptions}
+                                className="text-sm font-mono"
+                              />
+                            </ScrollArea>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
 

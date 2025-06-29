@@ -222,19 +222,6 @@ const navigationItems = [
   },
 ]
 
-const toolsItems = [
-  {
-    title: "Export Transcripts",
-    url: "#",
-    icon: Download,
-  },
-  {
-    title: "Text Editor",
-    url: "#",
-    icon: FileText,
-  },
-]
-
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   isDark: boolean;
   onThemeToggle: () => void;
@@ -255,6 +242,11 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   creditsLoading?: boolean;
   takeNotes?: boolean;
   onTakeNotesChange?: (checked: boolean) => void;
+  user?: {
+    name: string;
+    email: string;
+    avatar?: string;
+  };
 }
 
 export function AppSidebar({ 
@@ -277,6 +269,7 @@ export function AppSidebar({
   creditsLoading,
   takeNotes,
   onTakeNotesChange,
+  user,
   ...props 
 }: AppSidebarProps) {
   return (
@@ -378,19 +371,7 @@ export function AppSidebar({
         <SidebarGroup>
           <SidebarGroupLabel>Tools</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {toolsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-            <div className="space-y-4 px-4 mt-4">
+            <div className="space-y-4 px-4">
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="auto-summarize" className="flex items-center gap-2 font-normal">
                   <Sparkles className="h-4 w-4" />
@@ -504,9 +485,9 @@ export function AppSidebar({
       <SidebarFooter>
         <NavUser
           user={{
-            name: "John Doe",
-            email: "john@example.com",
-            avatar: "/avatars/01.png"
+            name: user?.name || "John Doe",
+            email: user?.email || "john@example.com",
+            avatar: user?.avatar || "/avatars/01.png"
           }}
         />
       </SidebarFooter>

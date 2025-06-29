@@ -851,34 +851,171 @@ export default function DashboardPage() {
   const downloadPDF = async () => { 
     setIsGeneratingPDF(true)
 
-    // Mock PDF generation
-    setTimeout(() => {
-      const content = `TRANSCRIPTION REPORT
-Generated: ${new Date().toLocaleString()}
-Duration: ${formatDuration(recordingDuration)}
-FULL TRANSCRIPTION:
-${transcription.map((segment, index) => {
-  const timestamp = segment.timestamp instanceof Date 
-    ? segment.timestamp.toLocaleTimeString()
-    : new Date(segment.timestamp).toLocaleTimeString();
-  return `[${timestamp}] ${segment.text}`;
-}).join("\n\n")}
+    try {
+      // Import jsPDF dynamically
+      const { jsPDF } = await import('jspdf')
+      const html2canvas = (await import('html2canvas')).default
 
-${summary ? `\nSUMMARY:\n${summary}` : ""}
-`
+      // Create a temporary container for the PDF content
+      const pdfContainer = document.createElement('div')
+      pdfContainer.style.position = 'absolute'
+      pdfContainer.style.left = '-9999px'
+      pdfContainer.style.top = '0'
+      pdfContainer.style.width = '800px'
+      pdfContainer.style.padding = '40px'
+      pdfContainer.style.backgroundColor = '#ffffff'
+      pdfContainer.style.fontFamily = 'Arial, sans-serif'
+      pdfContainer.style.color = '#000000'
+      
+      // Create the PDF content HTML
+      const pdfContent = `
+        <div style="max-width: 720px; margin: 0 auto;">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e5e7eb; padding-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
+              <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-weight: bold; font-size: 16px;">N</span>
+              </div>
+              <h1 style="margin: 0; font-size: 28px; font-weight: bold; color: #1f2937;">Nexogen AI</h1>
+            </div>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: #374151;">Transcription Report</h2>
+            <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280;">
+              Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+            </p>
+          </div>
 
-      const blob = new Blob([content], { type: "text/plain" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `transcription-${new Date().toISOString().split("T")[0]}.txt`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+          <!-- Metadata -->
+          <div style="display: flex; justify-content: space-between; margin-bottom: 30px; padding: 16px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Duration</div>
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${formatDuration(recordingDuration)}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Words</div>
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${transcription.reduce((acc, item) => acc + (item.text?.split(' ').length || 0), 0)}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Speakers</div>
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${new Set(transcription.map(item => item.speaker || 'Unknown')).size}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Cost</div>
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">$${actualCost.toFixed(2)}</div>
+            </div>
+          </div>
 
+          <!-- Transcription Section -->
+          <div style="margin-bottom: 30px;">
+            <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px;">
+              <span style="width: 16px; height: 16px; background-color: #10b981; border-radius: 4px;"></span>
+              ${takeNotes ? 'Notes' : 'Transcription'}
+            </h3>
+            <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; min-height: 200px;">
+              ${takeNotes ? 
+                // Notes mode - continuous text
+                transcription.map((item, index) => `
+                  <div style="margin-bottom: 16px;">
+                    <div style="font-size: 14px; line-height: 1.6; color: #1f2937; white-space: pre-line;">${item.text}</div>
+                    <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">${formatTimestamp(item.start)}</div>
+                  </div>
+                `).join('') :
+                // Transcription mode - bubble style
+                transcription.map((item, index) => {
+                  const speaker = item.speaker || 'Unknown';
+                  const speakerNumber = speaker.replace(/[^0-9]/g, '');
+                  const displaySpeaker = speakerNumber ? `Speaker ${parseInt(speakerNumber) + 1}` : speaker;
+                  const speakerColors = ['#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b', '#ef4444', '#06b6d4', '#f97316'];
+                  const color = speakerColors[index % speakerColors.length];
+                  const align = index % 2 === 0 ? 'left' : 'right';
+                  
+                  return `
+                    <div style="display: flex; justify-content: ${align === 'right' ? 'flex-end' : 'flex-start'}; margin-bottom: 16px;">
+                      <div style="max-width: 70%; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                          <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${color}; flex-shrink: 0; margin-top: 2px;"></div>
+                          <div style="flex: 1;">
+                            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px;">${displaySpeaker}</div>
+                            <div style="font-size: 14px; line-height: 1.5; color: #1f2937; white-space: pre-line;">${item.text}</div>
+                            <div style="font-size: 10px; color: #9ca3af; margin-top: 4px;">${formatTimestamp(item.start)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')
+              }
+            </div>
+          </div>
+
+          <!-- Summary Section -->
+          ${summary ? `
+            <div style="margin-bottom: 30px;">
+              <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px;">
+                <span style="width: 16px; height: 16px; background-color: #f59e0b; border-radius: 4px;"></span>
+                Summary
+              </h3>
+              <div style="background-color: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 16px;">
+                <div style="font-size: 14px; line-height: 1.6; color: #92400e; white-space: pre-line;">${summary}</div>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Footer -->
+          <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+            <p style="margin: 0;">Generated by Nexogen AI Transcription Service</p>
+            <p style="margin: 4px 0 0 0;">All transcriptions are processed with advanced AI technology</p>
+          </div>
+        </div>
+      `
+      
+      pdfContainer.innerHTML = pdfContent
+      document.body.appendChild(pdfContainer)
+
+      // Convert to canvas
+      const canvas = await html2canvas(pdfContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 800,
+        height: pdfContainer.scrollHeight
+      })
+
+      // Remove the temporary container
+      document.body.removeChild(pdfContainer)
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const imgWidth = 210 // A4 width in mm
+      const pageHeight = 295 // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      let heightLeft = imgHeight
+
+      let position = 0
+
+      // Add first page
+      pdf.addImage(canvas, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(canvas, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+
+      // Save the PDF
+      const filename = `transcription-${new Date().toISOString().split('T')[0]}.pdf`
+      pdf.save(filename)
+
+      toast.success('PDF generated successfully!')
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      toast.error('Failed to generate PDF')
+    } finally {
       setIsGeneratingPDF(false)
-    }, 1500)
+    }
   }
 
   const formatDuration = (seconds: number) => {
@@ -1115,46 +1252,54 @@ ${summary ? `\nSUMMARY:\n${summary}` : ""}
                 </div>
               ) : takeNotes ? (
                 <div className="flex flex-col gap-4 p-4">
-                  <div className="prose dark:prose-invert max-w-none">
-                    {transcription.map((item, index) => (
-                      <div key={index} className="mb-4">
-                        <div className="text-sm whitespace-pre-line">{item.text}</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {formatTimestamp(item.start)}
+                  {transcription.length > 0 ? (
+                    <div className="prose dark:prose-invert max-w-none">
+                      {transcription.map((item, index) => (
+                        <div key={index} className="mb-4">
+                          <div className="text-sm whitespace-pre-line">{item.text}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {formatTimestamp(item.start)}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-muted-foreground text-sm">No notes generated yet.</div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
-                  {transcription.map((item, index) => {
-                    const speaker = item.speaker || 'Unknown';
-                    const speakerNumber = speaker.replace(/[^0-9]/g, '');
-                    const displaySpeaker = speakerNumber ? `Speaker ${parseInt(speakerNumber) + 1}` : speaker;
-                    const { color, align } = speakerMap[speaker] || { color: 'bg-gray-400', align: 'left' };
-                    return (
-                      <div
-                        key={index}
-                        className={`flex ${align === 'right' ? 'justify-end' : 'justify-start'}`}
-                      >
+                  {transcription.length > 0 ? (
+                    transcription.map((item, index) => {
+                      const speaker = item.speaker || 'Unknown';
+                      const speakerNumber = speaker.replace(/[^0-9]/g, '');
+                      const displaySpeaker = speakerNumber ? `Speaker ${parseInt(speakerNumber) + 1}` : speaker;
+                      const { color, align } = speakerMap[speaker] || { color: 'bg-gray-400', align: 'left' };
+                      return (
                         <div
-                          className={`max-w-[70%] rounded-lg px-4 py-2 shadow bg-gray-50 dark:bg-neutral-900 flex items-start gap-2 ${
-                            align === 'right' ? 'flex-row-reverse' : ''
-                          }`}
+                          key={index}
+                          className={`flex ${align === 'right' ? 'justify-end' : 'justify-start'}`}
                         >
-                          <span className={`mt-1 w-3 h-3 rounded-full ${color} shrink-0`}></span>
-                          <div>
-                            <div className="text-xs font-semibold text-muted-foreground mb-1">{displaySpeaker}</div>
-                            <div className="text-sm whitespace-pre-line">{item.text}</div>
-                            <span className="text-[10px] text-muted-foreground block mt-1">
-                              {formatTimestamp(item.start)}
-                            </span>
+                          <div
+                            className={`max-w-[70%] rounded-lg px-4 py-2 shadow bg-gray-50 dark:bg-neutral-900 flex items-start gap-2 ${
+                              align === 'right' ? 'flex-row-reverse' : ''
+                            }`}
+                          >
+                            <span className={`mt-1 w-3 h-3 rounded-full ${color} shrink-0`}></span>
+                            <div>
+                              <div className="text-xs font-semibold text-muted-foreground mb-1">{displaySpeaker}</div>
+                              <div className="text-sm whitespace-pre-line">{item.text}</div>
+                              <span className="text-[10px] text-muted-foreground block mt-1">
+                                {formatTimestamp(item.start)}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  ) : (
+                    <div className="text-muted-foreground text-sm">No transcription generated yet.</div>
+                  )}
                 </div>
               )}
             </ScrollArea>

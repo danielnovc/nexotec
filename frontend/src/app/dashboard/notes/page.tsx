@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { EditableText } from "@/components/editable-text"
 import { 
   FileText, 
   Download, 
@@ -299,9 +300,14 @@ export default function NotesPage() {
                     </div>
                   ) : (
                     <ScrollArea className="h-32 w-full">
-                      <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {getNoteText(note.content)}
-                      </div>
+                      <EditableText
+                        text={getNoteText(note.content)}
+                        itemId={note.id}
+                        itemType="note"
+                        encryptionKey={encryptionKey}
+                        onUpdate={loadNotes}
+                        className="text-sm text-muted-foreground"
+                      />
                     </ScrollArea>
                   )}
                 </CardContent>

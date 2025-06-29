@@ -5,6 +5,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { AuthGuard } from "@/components/auth-guard"
 import { AppSidebar } from "@/components/app-sidebar"
 import { useCredits } from "@/hooks/useCredits"
+import { useAuth } from "@/contexts/AuthContext"
 import { SupabaseConnectModal } from "@/components/supabase-connect-modal"
 
 // Create context for dashboard state
@@ -30,6 +31,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const { credits, loading: creditsLoading, refreshCredits } = useCredits()
+  const { user } = useAuth()
   
   // Theme toggle state
   const [isDark, setIsDark] = useState(false)
@@ -130,6 +132,11 @@ export default function DashboardLayout({
             creditsLoading={creditsLoading}
             takeNotes={takeNotes}
             onTakeNotesChange={setTakeNotes}
+            user={user ? {
+              name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+              email: user.email || 'user@example.com',
+              avatar: user.user_metadata?.avatar_url || undefined
+            } : undefined}
           />
           <SupabaseConnectModal 
             open={supabaseModalOpen} 
