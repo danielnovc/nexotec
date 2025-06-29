@@ -114,16 +114,20 @@ export function EditableText({
         )
       }
 
-      // Add the clickable word
+      // Add the clickable word as a span instead of button for better spacing
       parts.push(
-        <button
+        <span
           key={`word-${match.index}`}
           onClick={() => handleWordClick(match![0])}
-          className="hover:bg-blue-100 hover:text-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300 px-1 py-0.5 rounded transition-colors duration-200 cursor-pointer border border-transparent hover:border-blue-200 dark:hover:border-blue-700"
+          className="hover:bg-blue-100 hover:text-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300 px-0.5 py-0.5 rounded transition-colors duration-200 cursor-pointer border border-transparent hover:border-blue-200 dark:hover:border-blue-700 inline-block"
           title="Click to edit this word"
+          style={{ 
+            margin: '0 1px',
+            userSelect: 'none'
+          }}
         >
           {match[0]}
-        </button>
+        </span>
       )
 
       lastIndex = match.index + match[0].length
@@ -150,7 +154,9 @@ export function EditableText({
             <span>Click any word to edit</span>
           </div>
         </div>
-        {renderText()}
+        <div className="inline">
+          {renderText()}
+        </div>
       </div>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>

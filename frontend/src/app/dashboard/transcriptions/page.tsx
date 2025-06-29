@@ -267,6 +267,8 @@ export default function TranscriptionsPage() {
       pdfContainer.style.backgroundColor = '#ffffff'
       pdfContainer.style.fontFamily = 'Arial, sans-serif'
       pdfContainer.style.color = '#000000'
+      pdfContainer.style.fontSize = '14px'
+      pdfContainer.style.lineHeight = '1.4'
       
       // Parse the transcription content
       let transcriptionData: any[] = []
@@ -290,56 +292,56 @@ export default function TranscriptionsPage() {
         transcriptionData = transcription.content
       }
       
-      // Create the PDF content HTML
+      // Create the PDF content HTML with explicit styles
       const pdfContent = `
-        <div style="max-width: 720px; margin: 0 auto;">
+        <div style="max-width: 720px; margin: 0 auto; font-family: Arial, sans-serif; color: #000000;">
           <!-- Header -->
-          <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e5e7eb; padding-bottom: 20px;">
+          <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #cccccc; padding-bottom: 20px;">
             <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
               <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                <span style="color: white; font-weight: bold; font-size: 16px;">N</span>
+                <span style="color: #ffffff; font-weight: bold; font-size: 16px;">N</span>
               </div>
-              <h1 style="margin: 0; font-size: 28px; font-weight: bold; color: #1f2937;">Nexogen AI</h1>
+              <h1 style="margin: 0; font-size: 28px; font-weight: bold; color: #333333;">Nexogen AI</h1>
             </div>
-            <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: #374151;">Transcription Report</h2>
-            <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: #555555;">Transcription Report</h2>
+            <p style="margin: 8px 0 0 0; font-size: 14px; color: #666666;">
               Generated on ${new Date(transcription.created_at).toLocaleDateString()} at ${new Date(transcription.created_at).toLocaleTimeString()}
             </p>
           </div>
 
           <!-- Metadata -->
-          <div style="display: flex; justify-content: space-between; margin-bottom: 30px; padding: 16px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 30px; padding: 16px; background-color: #f5f5f5; border-radius: 8px; border: 1px solid #dddddd;">
             <div style="text-align: center;">
-              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Duration</div>
-              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${transcription.duration ? formatDuration(transcription.duration) : 'N/A'}</div>
+              <div style="font-size: 12px; color: #666666; margin-bottom: 4px;">Duration</div>
+              <div style="font-size: 16px; font-weight: 600; color: #333333;">${transcription.duration ? formatDuration(transcription.duration) : 'N/A'}</div>
             </div>
             <div style="text-align: center;">
-              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Words</div>
-              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${transcriptionData.reduce((acc, item) => acc + (item.text?.split(' ').length || 0), 0)}</div>
+              <div style="font-size: 12px; color: #666666; margin-bottom: 4px;">Words</div>
+              <div style="font-size: 16px; font-weight: 600; color: #333333;">${transcriptionData.reduce((acc, item) => acc + (item.text?.split(' ').length || 0), 0)}</div>
             </div>
             <div style="text-align: center;">
-              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Speakers</div>
-              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${new Set(transcriptionData.map(item => item.speaker || 'Unknown')).size}</div>
+              <div style="font-size: 12px; color: #666666; margin-bottom: 4px;">Speakers</div>
+              <div style="font-size: 16px; font-weight: 600; color: #333333;">${new Set(transcriptionData.map(item => item.speaker || 'Unknown')).size}</div>
             </div>
             <div style="text-align: center;">
-              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Cost</div>
-              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">$${transcription.credits_used?.toFixed(2) || '0.00'}</div>
+              <div style="font-size: 12px; color: #666666; margin-bottom: 4px;">Cost</div>
+              <div style="font-size: 16px; font-weight: 600; color: #333333;">$${transcription.credits_used?.toFixed(2) || '0.00'}</div>
             </div>
           </div>
 
           <!-- Transcription Section -->
           <div style="margin-bottom: 30px;">
-            <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px;">
+            <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #333333; display: flex; align-items: center; gap: 8px;">
               <span style="width: 16px; height: 16px; background-color: #10b981; border-radius: 4px;"></span>
               ${transcription.take_notes ? 'Notes' : 'Transcription'}
             </h3>
-            <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; min-height: 200px;">
+            <div style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; padding: 20px; min-height: 200px;">
               ${transcription.take_notes ? 
                 // Notes mode - continuous text
                 transcriptionData.map((item, index) => `
                   <div style="margin-bottom: 16px;">
-                    <div style="font-size: 14px; line-height: 1.6; color: #1f2937; white-space: pre-line;">${item.text}</div>
-                    <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">${item.start ? formatTimestamp(item.start) : ''}</div>
+                    <div style="font-size: 14px; line-height: 1.6; color: #333333; white-space: pre-line;">${item.text}</div>
+                    <div style="font-size: 11px; color: #666666; margin-top: 4px;">${item.start ? formatTimestamp(item.start) : ''}</div>
                   </div>
                 `).join('') :
                 // Transcription mode - bubble style
@@ -353,13 +355,13 @@ export default function TranscriptionsPage() {
                   
                   return `
                     <div style="display: flex; justify-content: ${align === 'right' ? 'flex-end' : 'flex-start'}; margin-bottom: 16px;">
-                      <div style="max-width: 70%; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                      <div style="max-width: 70%; background-color: #f5f5f5; border: 1px solid #dddddd; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                         <div style="display: flex; align-items: flex-start; gap: 8px;">
                           <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${color}; flex-shrink: 0; margin-top: 2px;"></div>
                           <div style="flex: 1;">
-                            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px;">${displaySpeaker}</div>
-                            <div style="font-size: 14px; line-height: 1.5; color: #1f2937; white-space: pre-line;">${item.text}</div>
-                            <div style="font-size: 10px; color: #9ca3af; margin-top: 4px;">${item.start ? formatTimestamp(item.start) : ''}</div>
+                            <div style="font-size: 11px; font-weight: 600; color: #666666; margin-bottom: 4px;">${displaySpeaker}</div>
+                            <div style="font-size: 14px; line-height: 1.5; color: #333333; white-space: pre-line;">${item.text}</div>
+                            <div style="font-size: 10px; color: #999999; margin-top: 4px;">${item.start ? formatTimestamp(item.start) : ''}</div>
                           </div>
                         </div>
                       </div>
@@ -371,7 +373,7 @@ export default function TranscriptionsPage() {
           </div>
 
           <!-- Footer -->
-          <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+          <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #dddddd; color: #666666; font-size: 12px;">
             <p style="margin: 0;">Generated by Nexogen AI Transcription Service</p>
             <p style="margin: 4px 0 0 0;">All transcriptions are processed with advanced AI technology</p>
           </div>
@@ -381,14 +383,16 @@ export default function TranscriptionsPage() {
       pdfContainer.innerHTML = pdfContent
       document.body.appendChild(pdfContainer)
 
-      // Convert to canvas
+      // Convert to canvas with explicit settings
       const canvas = await html2canvas(pdfContainer, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         width: 800,
-        height: pdfContainer.scrollHeight
+        height: pdfContainer.scrollHeight,
+        logging: false,
+        removeContainer: true
       })
 
       // Remove the temporary container
