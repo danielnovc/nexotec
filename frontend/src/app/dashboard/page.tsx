@@ -84,7 +84,7 @@ const SPEAKER_COLORS = [
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const { takeNotes } = useDashboard()
+  const { takeNotes, refreshCredits } = useDashboard()
   const { 
     credits, 
     loading: creditsLoading, 
@@ -653,6 +653,8 @@ export default function DashboardPage() {
       const costToDeduct = actualCost > 0 ? actualCost : estimateCost(audioDuration);
       await deductCredits(costToDeduct);
       console.log(`Successfully deducted ${costToDeduct} credits for transcription`);
+      // Refresh credits in sidebar
+      await refreshCredits();
     } catch (deductionError) {
       console.error('Error deducting credits:', deductionError);
       // Don't throw error here as transcription was successful, just log it
@@ -672,6 +674,7 @@ export default function DashboardPage() {
         const { error } = await supabase
           .from('transcriptions')
           .insert({
+            user_id: user.id,
             title,
             content: JSON.stringify(encryptedData),
             duration,
@@ -705,6 +708,7 @@ export default function DashboardPage() {
             const { error: notesError } = await supabase
               .from('notes')
               .insert({
+                user_id: user.id,
                 title: `Notes ${new Date().toLocaleString()}`,
                 content: JSON.stringify(encryptedNotesData),
                 is_encrypted: true,
@@ -796,6 +800,8 @@ export default function DashboardPage() {
         const costToDeduct = data.cost_breakdown?.user_charge || estimateFlatRateCost();
         await deductCredits(costToDeduct);
         console.log(`Successfully deducted ${costToDeduct} credits for summary generation`);
+        // Refresh credits in sidebar
+        await refreshCredits();
       } catch (deductionError) {
         console.error('Error deducting credits for summary:', deductionError);
         // Don't throw error here as summary was successful, just log it
@@ -816,6 +822,7 @@ export default function DashboardPage() {
           const { error } = await supabase
             .from('notes')
             .insert({
+              user_id: user.id,
               title: `Notes ${new Date().toLocaleString()}`,
               content: JSON.stringify(encryptedData),
               is_encrypted: true,

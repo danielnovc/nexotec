@@ -282,9 +282,32 @@ export function AppSidebar({
   return (
     <Sidebar {...props}>
       <SidebarHeader>
-        <div className="flex items-center gap-2 mb-4">
-          <img src="/icon.png" alt="Transcrib" className="w-8 h-8" />
-          <h2 className="text-sidebar-foreground font-medium">Nexogen AI</h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <img src="/icon.png" alt="Transcrib" className="w-8 h-8" />
+            <h2 className="text-sidebar-foreground font-medium">Nexogen AI</h2>
+          </div>
+          
+          {/* Theme Toggle Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onThemeToggle}
+                className="h-8 w-8 p-0"
+              >
+                {isDark ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={8}>
+              <p>Toggle theme</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
         
         {/* Credits Display */}

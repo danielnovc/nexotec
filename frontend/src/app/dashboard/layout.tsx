@@ -11,6 +11,7 @@ import { SupabaseConnectModal } from "@/components/supabase-connect-modal"
 interface DashboardContextType {
   takeNotes: boolean;
   setTakeNotes: (value: boolean) => void;
+  refreshCredits: () => Promise<void>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -28,7 +29,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { credits, loading: creditsLoading } = useCredits()
+  const { credits, loading: creditsLoading, refreshCredits } = useCredits()
   
   // Theme toggle state
   const [isDark, setIsDark] = useState(false)
@@ -136,7 +137,7 @@ export default function DashboardLayout({
             onS3ConfigSave={handleS3ConfigSave} 
           />
           <main className="flex-1 overflow-y-auto p-8">
-            <DashboardContext.Provider value={{ takeNotes, setTakeNotes }}>
+            <DashboardContext.Provider value={{ takeNotes, setTakeNotes, refreshCredits }}>
               {children}
             </DashboardContext.Provider>
           </main>
