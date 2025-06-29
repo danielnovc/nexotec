@@ -16,10 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { AppSidebar } from "@/components/app-sidebar"
 import { Loader } from "@/components/ui/loader"
 import { toast } from "sonner"
-import { SupabaseConnectModal } from "@/components/supabase-connect-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { useCredits } from "@/hooks/useCredits"
 import { supabase } from "@/lib/supabase"
@@ -33,6 +31,7 @@ import {
   isEncrypted 
 } from "@/lib/encryption"
 import { saveEncryptedTranscription, saveEncryptedNote } from "@/lib/supabase"
+import { useDashboard } from "../dashboard/layout"
 
 interface Transcription {
   id: string;
@@ -85,6 +84,7 @@ const SPEAKER_COLORS = [
 
 export default function TranscriptionDashboard() {
   const { user } = useAuth()
+  const { takeNotes } = useDashboard()
   const { 
     credits, 
     loading: creditsLoading, 
@@ -124,30 +124,11 @@ export default function TranscriptionDashboard() {
   const audioChunksRef = useRef<Blob[]>([])
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Theme toggle state
-  const [isDark, setIsDark] = useState(false);
-  const [autoDownloadRecordings, setAutoDownloadRecordings] = useState(false)
-  const [saveTranscripts, setSaveTranscripts] = useState(false)
-  const [autoDownloadTranscripts, setAutoDownloadTranscripts] = useState(false)
-  const [autoSummarize, setAutoSummarize] = useState(false)
-  const [moreThanTwoSpeakers, setMoreThanTwoSpeakers] = useState(false)
-  const [isConnectingSupabase, setIsConnectingSupabase] = useState(false)
-  const [supabaseModalOpen, setSupabaseModalOpen] = useState(false)
-  const [takeNotes, setTakeNotes] = useState(false)
-  const [saveAudioToStorage, setSaveAudioToStorage] = useState(false)
-
   // Encryption state - automatically enabled when saveTranscripts is true
   const [encryptionKey, setEncryptionKey] = useState("")
 
-  // Load toggle states from localStorage on mount
+  // Load encryption key on mount
   useEffect(() => {
-    setAutoDownloadRecordings(localStorage.getItem("autoDownloadRecordings") === "true")
-    setSaveTranscripts(localStorage.getItem("saveTranscripts") === "true")
-    setAutoDownloadTranscripts(localStorage.getItem("autoDownloadTranscripts") === "true")
-    setAutoSummarize(localStorage.getItem("autoSummarize") === "true")
-    setMoreThanTwoSpeakers(localStorage.getItem("moreThanTwoSpeakers") === "true")
-    setSaveAudioToStorage(localStorage.getItem("saveAudioToStorage") === "true")
-    
     // Initialize encryption key if not already set
     let storedKey = sessionStorage.getItem('encryption_key')
     if (!storedKey) {
@@ -156,47 +137,6 @@ export default function TranscriptionDashboard() {
     }
     setEncryptionKey(storedKey)
   }, [])
-
-  // Persist toggle states to localStorage
-  useEffect(() => {
-    localStorage.setItem("autoDownloadRecordings", String(autoDownloadRecordings))
-  }, [autoDownloadRecordings])
-  useEffect(() => {
-    localStorage.setItem("saveTranscripts", String(saveTranscripts))
-  }, [saveTranscripts])
-  useEffect(() => {
-    localStorage.setItem("autoDownloadTranscripts", String(autoDownloadTranscripts))
-  }, [autoDownloadTranscripts])
-  useEffect(() => {
-    localStorage.setItem("autoSummarize", String(autoSummarize))
-  }, [autoSummarize])
-  useEffect(() => {
-    localStorage.setItem("moreThanTwoSpeakers", String(moreThanTwoSpeakers))
-  }, [moreThanTwoSpeakers])
-  useEffect(() => {
-    localStorage.setItem("saveAudioToStorage", String(saveAudioToStorage))
-  }, [saveAudioToStorage])
-
-  useEffect(() => {
-    // On mount, set initial theme
-    const isDarkMode =
-      typeof window !== "undefined" &&
-      (localStorage.getItem("theme") === "dark" ||
-        (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches));
-    setIsDark(isDarkMode);
-  }, []);
-  const toggleTheme = () => {
-    const html = document.documentElement;
-    if (html.classList.contains("dark")) {
-      html.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setIsDark(false);
-    } else {
-      html.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setIsDark(true);
-    }
-  };
 
   useEffect(() => {
     // Only run browser-specific code on client side after mount
@@ -453,11 +393,6 @@ export default function TranscriptionDashboard() {
       clearInterval(durationIntervalRef.current);
     }
     
-    // Upload to Supabase Storage if enabled
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `recording-${timestamp}.wav`;
-    await uploadAudioToSupabaseStorage(wavBlob, fileName);
-    
     console.log('Recording stopped, WAV file created');
   };
 
@@ -713,8 +648,18 @@ export default function TranscriptionDashboard() {
     setError(null); // Clear any previous errors
     setIsProcessing(false); // Stop loading when transcription is processed successfully
 
+    // Deduct credits after successful transcription
+    try {
+      const costToDeduct = actualCost > 0 ? actualCost : estimateCost(audioDuration);
+      await deductCredits(costToDeduct);
+      console.log(`Successfully deducted ${costToDeduct} credits for transcription`);
+    } catch (deductionError) {
+      console.error('Error deducting credits:', deductionError);
+      // Don't throw error here as transcription was successful, just log it
+    }
+
     // Automatically save encrypted transcription if saveTranscripts is enabled
-    if (saveTranscripts && user && encryptionKey) {
+    if (user && encryptionKey) {
       try {
         const allTranscriptions = [...newTranscriptions, ...transcription];
         const title = `Transcription ${new Date().toLocaleString()}`;
@@ -846,8 +791,18 @@ export default function TranscriptionDashboard() {
       
       setSummary(data.summary);
       
+      // Deduct credits after successful summary generation
+      try {
+        const costToDeduct = data.cost_breakdown?.user_charge || estimateFlatRateCost();
+        await deductCredits(costToDeduct);
+        console.log(`Successfully deducted ${costToDeduct} credits for summary generation`);
+      } catch (deductionError) {
+        console.error('Error deducting credits for summary:', deductionError);
+        // Don't throw error here as summary was successful, just log it
+      }
+      
       // Automatically save encrypted notes if saveTranscripts is enabled
-      if (saveTranscripts && user && encryptionKey && data.summary) {
+      if (user && encryptionKey && data.summary) {
         try {
           const notesData = {
             transcription: transcription,
@@ -997,84 +952,8 @@ ${summary ? `\nSUMMARY:\n${summary}` : ""}
     return acc;
   }, {} as Record<string, { color: string; align: 'left' | 'right' }>);
 
-  const handleConnectSupabase = async () => {
-    setIsConnectingSupabase(true)
-    try {
-      // Your Supabase connection logic here
-      setSupabaseModalOpen(true)
-    } catch (error) {
-      console.error('Error connecting to Supabase:', error)
-      toast.error('Failed to connect to Supabase')
-    } finally {
-      setIsConnectingSupabase(false)
-    }
-  }
-
-  const uploadAudioToSupabaseStorage = async (audioBlob: Blob, fileName: string) => {
-    if (!saveAudioToStorage) return
-
-    try {
-      toast.info('Uploading audio to storage...')
-      
-      let result;
-      
-      // Use encrypted storage if encryption is enabled (when saveTranscripts is true)
-      if (saveTranscripts && encryptionKey) {
-        result = await uploadEncryptedAudioToStorage(audioBlob, fileName, encryptionKey, s3Storage);
-        if (result.success) {
-          toast.success('Encrypted audio uploaded to storage successfully');
-          console.log('Encrypted audio uploaded to:', result.fileUrl);
-          console.log('Audio metadata:', result.metadata);
-        }
-      } else {
-        // Use regular storage
-        result = await uploadAudioToStorage(audioBlob, fileName, s3Storage);
-        if (result.success) {
-          toast.success('Audio uploaded to storage successfully');
-          console.log('Audio uploaded to:', result.fileUrl);
-        }
-      }
-      
-      if (!result.success) {
-        toast.error(`Failed to upload audio: ${result.error}`);
-        console.error('Upload error:', result.error);
-      }
-    } catch (error) {
-      toast.error('Error uploading audio to storage');
-      console.error('Upload error:', error);
-    }
-  }
-
-  const handleS3ConfigSave = (config: { accessKeyId: string; secretAccessKey: string; bucketName: string }) => {
-    // Update the S3 storage instance with new credentials
-    const newStorage = initializeS3Storage(config.accessKeyId, config.secretAccessKey, config.bucketName)
-    // You might want to store this in a ref or state to use it for uploads
-    console.log('S3 configuration updated:', config)
-  }
-
   return (
     <div className="flex flex-1 h-[100dvh] bg-[#f5faff] dark:bg-neutral-900">
-      <AppSidebar 
-        className="w-64 border-r" 
-        isDark={isDark}
-        onThemeToggle={toggleTheme}
-        autoDownloadRecordings={autoDownloadRecordings}
-        onAutoDownloadRecordingsChange={setAutoDownloadRecordings}
-        saveTranscripts={saveTranscripts}
-        onSaveTranscriptsChange={setSaveTranscripts}
-        autoDownloadTranscripts={autoDownloadTranscripts}
-        onAutoDownloadTranscriptsChange={setAutoDownloadTranscripts}
-        autoSummarize={autoSummarize}
-        onAutoSummarizeChange={setAutoSummarize}
-        moreThanTwoSpeakers={moreThanTwoSpeakers}
-        onMoreThanTwoSpeakersChange={setMoreThanTwoSpeakers}
-        saveAudioToStorage={saveAudioToStorage}
-        onSaveAudioToStorageChange={setSaveAudioToStorage}
-        onOpenSupabaseModal={() => setSupabaseModalOpen(true)}
-        credits={credits}
-        creditsLoading={creditsLoading}
-      />
-      <SupabaseConnectModal open={supabaseModalOpen} onClose={() => setSupabaseModalOpen(false)} onS3ConfigSave={handleS3ConfigSave} />
       <main className="flex-1 overflow-y-auto p-8 flex flex-col gap-8">
         {/* Recording Controls */}
         <Card className="shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
@@ -1182,31 +1061,6 @@ ${summary ? `\nSUMMARY:\n${summary}` : ""}
                   </>
                 )}
               </Button>
-            </div>
-            
-            {/* Note-taking Mode Toggle */}
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-gray-100">
-                      {takeNotes ? "Note-taking Mode" : "Transcription Mode"}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {takeNotes 
-                        ? "Display as continuous text for note-taking" 
-                        : "Display as conversation with speaker labels"
-                      }
-                    </div>
-                  </div>
-                </div>
-                <Switch
-                  checked={takeNotes}
-                  onCheckedChange={setTakeNotes}
-                  className="data-[state=checked]:bg-blue-600"
-                />
-              </div>
             </div>
           </CardContent>
         </Card>

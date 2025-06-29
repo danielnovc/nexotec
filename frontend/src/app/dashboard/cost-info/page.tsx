@@ -106,7 +106,7 @@ export default function CostInfoPage() {
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => window.location.href = '/credits'}
+                    onClick={() => window.location.href = '/dashboard/credits'}
                   >
                     Buy Credits
                   </Button>

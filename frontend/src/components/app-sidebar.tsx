@@ -1,5 +1,6 @@
 "use client"
 import type * as React from "react"
+import Link from "next/link"
 import {
   BookOpen,
   Bot,
@@ -28,6 +29,7 @@ import {
   Users,
   HardDrive,
   CreditCard,
+  RotateCcw,
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
@@ -185,17 +187,22 @@ const navigationItems = [
   },
   {
     title: "Transcription History",
-    url: "/transcriptions",
+    url: "/dashboard/transcriptions",
     icon: History,
   },
   {
     title: "Notes History",
-    url: "/notes",
+    url: "/dashboard/notes",
     icon: FileText,
   },
   {
     title: "Cost Information",
-    url: "/cost-info",
+    url: "/dashboard/cost-info",
+    icon: CreditCard,
+  },
+  {
+    title: "Credits",
+    url: "/dashboard/credits",
     icon: CreditCard,
   },
   {
@@ -246,6 +253,8 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onOpenSupabaseModal: () => void;
   credits?: number;
   creditsLoading?: boolean;
+  takeNotes?: boolean;
+  onTakeNotesChange?: (checked: boolean) => void;
 }
 
 export function AppSidebar({ 
@@ -266,31 +275,17 @@ export function AppSidebar({
   onOpenSupabaseModal,
   credits,
   creditsLoading,
+  takeNotes,
+  onTakeNotesChange,
   ...props 
 }: AppSidebarProps) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="hover:bg-transparent">
-              <a href="#" className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-2">
-                  <img src="/logo.png" alt="TranscribeAI" className="h-12" />
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Toggle theme"
-                  onClick={onThemeToggle}
-                  className="transition-colors"
-                >
-                  {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                </Button>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="flex items-center gap-2 mb-4">
+          <img src="/icon.png" alt="Transcrib" className="w-8 h-8" />
+          <h2 className="text-sidebar-foreground font-medium">Nexogen AI</h2>
+        </div>
         
         {/* Credits Display */}
         <div className="px-2 py-3 bg-gray-100 dark:bg-gray-800 rounded-lg mx-2 mb-4">
@@ -307,6 +302,35 @@ export function AppSidebar({
             </div>
           </div>
         </div>
+
+        {/* Transcription Mode Toggle */}
+        {takeNotes !== undefined && onTakeNotesChange && (
+          <div className="px-2 mb-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onTakeNotesChange(!takeNotes)}
+                  className="w-full flex items-center gap-2 font-medium bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 border-gray-300 dark:border-neutral-600"
+                >
+                  <RotateCcw className={`h-4 w-4 transition-transform duration-300 ${takeNotes ? 'rotate-180' : ''}`} />
+                  <span className="text-sm">
+                    {takeNotes ? "Notes Mode" : "Transcription Mode"}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={8} className="max-w-[300px]">
+                <p>
+                  {takeNotes 
+                    ? "Switch to Transcription Mode: Display as conversation with speaker labels" 
+                    : "Switch to Notes Mode: Display as continuous text for note-taking"
+                  }
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -317,10 +341,10 @@ export function AppSidebar({
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={item.isActive}>
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -335,10 +359,10 @@ export function AppSidebar({
               {toolsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

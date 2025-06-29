@@ -38,7 +38,9 @@ export async function POST(req: Request) {
     if (jobId) {
       console.log('Checking status for job:', jobId);
       
-      // Use RunPod status endpoint (both transcription and notes jobs use the same status structure)
+      // Determine which endpoint to use for status check based on job ID format or stored context
+      // For now, we'll use the transcription endpoint as the default since both use the same status structure
+      // In a production system, you might want to store job type information or use different job ID prefixes
       const statusUrl = transcriptionUrl.replace('/run', `/status/${jobId}`);
       console.log('Status check URL:', statusUrl);
       
@@ -56,7 +58,77 @@ export async function POST(req: Request) {
       if (!statusResponse.ok) {
         const errorText = await statusResponse.text();
         console.error('RunPod status check error:', errorText);
-        throw new Error(`Status check failed: ${statusResponse.status} ${errorText}`);
+        
+        // If the job doesn't exist on transcription endpoint, try notes endpoint
+        if (statusResponse.status === 404) {
+          console.log('Job not found on transcription endpoint, trying notes endpoint...');
+          const notesStatusUrl = notesUrl.replace('/run', `/status/${jobId}`);
+          console.log('Notes status check URL:', notesStatusUrl);
+          
+          const notesStatusResponse = await fetch(notesStatusUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${runpodApiKey}`,
+              'User-Agent': 'Transcrib-Frontend/1.0',
+              'Accept': 'application/json',
+              'X-Client-Version': '1.0.0',
+              'X-Request-ID': crypto.randomUUID()
+            }
+          });
+          
+          if (!notesStatusResponse.ok) {
+            const notesErrorText = await notesStatusResponse.text();
+            console.error('RunPod notes status check error:', notesErrorText);
+            throw new Error(`Status check failed: ${notesStatusResponse.status} ${notesErrorText}`);
+          }
+          
+          const notesStatusResult = await notesStatusResponse.json();
+          console.log('RunPod notes status result:', JSON.stringify(notesStatusResult, null, 2));
+          
+          // RunPod wraps status responses in 'output' field
+          const actualStatusResult = notesStatusResult.output || notesStatusResult;
+          console.log('Actual notes status result:', actualStatusResult);
+          
+          // Check if job is complete
+          if (actualStatusResult.status === 'COMPLETED' && actualStatusResult.result) {
+            const result = actualStatusResult.result;
+            return NextResponse.json({ 
+              message: 'Job completed successfully', 
+              status: 'success', 
+              chunks: result.chunks || [],
+              full_text: result.full_text || '',
+              cost_breakdown: actualStatusResult.cost_breakdown || null,
+              tls_version: '1.3'
+            }, { 
+              status: 200,
+              headers: securityHeaders
+            });
+          } else if (actualStatusResult.status === 'IN_PROGRESS' || actualStatusResult.status === 'IN_QUEUE' || actualStatusResult.status === 'WAITING_FOR_INIT') {
+            return NextResponse.json({ 
+              message: `Job ${actualStatusResult.status.toLowerCase().replace('_', ' ')}`, 
+              status: 'processing',
+              jobId: jobId,
+              tls_version: '1.3'
+            }, { 
+              status: 202,
+              headers: securityHeaders
+            });
+          } else if (actualStatusResult.status === 'FAILED') {
+            throw new Error(`Job failed: ${actualStatusResult.error || 'Unknown error'}`);
+          } else {
+            return NextResponse.json({ 
+              message: 'Job status unknown', 
+              status: 'unknown',
+              jobId: jobId,
+              tls_version: '1.3'
+            }, { 
+              status: 202,
+              headers: securityHeaders
+            });
+          }
+        } else {
+          throw new Error(`Status check failed: ${statusResponse.status} ${errorText}`);
+        }
       }
 
       const statusResult = await statusResponse.json();
