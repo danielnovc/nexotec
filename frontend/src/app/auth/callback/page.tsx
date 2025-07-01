@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/lib/supabase"
 import { Loader } from "@/components/ui/loader"
 import { toast } from "sonner"
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const [error, setError] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(true)
   const { user, loading } = useAuth()
@@ -102,5 +102,21 @@ export default function AuthCallbackPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 p-8 text-center">
+          <Loader className="h-8 w-8" />
+          <h1 className="text-2xl font-bold text-foreground">Loading...</h1>
+          <p className="text-muted-foreground">Please wait...</p>
+        </div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   )
 } 
