@@ -36,6 +36,7 @@ import {
   X,
   Plus,
   HelpCircle,
+  Monitor,
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
@@ -243,6 +244,8 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onMoreThanTwoSpeakersChange: (checked: boolean) => void;
   saveAudioToStorage: boolean;
   onSaveAudioToStorageChange: (checked: boolean) => void;
+  recordDeviceAudio: boolean;
+  onRecordDeviceAudioChange: (checked: boolean) => void;
   onOpenSupabaseModal: () => void;
   credits?: number;
   creditsLoading?: boolean;
@@ -272,6 +275,8 @@ export function AppSidebar({
   onMoreThanTwoSpeakersChange,
   saveAudioToStorage,
   onSaveAudioToStorageChange,
+  recordDeviceAudio,
+  onRecordDeviceAudioChange,
   onOpenSupabaseModal,
   credits,
   creditsLoading,
@@ -397,7 +402,7 @@ export function AppSidebar({
                   </Button>
                 </motion.div>
               </TooltipTrigger>
-              <TooltipContent sideOffset={8} className="max-w-[300px]">
+              <TooltipContent sideOffset={8} className="max-w-[300px] z-[99999] relative">
                 <p>
                   {takeNotes 
                     ? "Switch to Transcription Mode: Display as conversation with speaker labels" 
@@ -454,7 +459,7 @@ export function AppSidebar({
                       <span className="font-normal">More than 2 speakers</span>
                     </Label>
                   </TooltipTrigger>
-                  <TooltipContent sideOffset={8} className="max-w-[300px]">
+                  <TooltipContent sideOffset={8} className="max-w-[300px] z-[99999] relative">
                     <p>Enable this if your audio contains more than two speakers. This helps improve speaker diarization accuracy by preventing the system from mistakenly adding extra speakers due to background noise or brief sound discrepancies.</p>
                   </TooltipContent>
                 </Tooltip>
@@ -463,6 +468,26 @@ export function AppSidebar({
                   checked={moreThanTwoSpeakers}
                   onCheckedChange={onMoreThanTwoSpeakersChange}
                   aria-label="Toggle more than two speakers mode"
+                />
+              </div>
+
+              <div className="flex items-center justify-between space-x-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label htmlFor="record-device-audio" className="flex items-center gap-2 font-normal cursor-help">
+                      <Monitor className="h-4 w-4" />
+                      <span className="font-normal">Record device audio</span>
+                    </Label>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={8} className="max-w-[300px] z-[99999] relative">
+                    <p>Enable this to record system audio (music, videos, calls) in addition to microphone input. This allows you to capture both your voice and the audio playing on your device.</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Switch
+                  id="record-device-audio"
+                  checked={recordDeviceAudio}
+                  onCheckedChange={onRecordDeviceAudioChange}
+                  aria-label="Toggle device audio recording"
                 />
               </div>
             </div>

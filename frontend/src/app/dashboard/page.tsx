@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { Mic, MicOff, Download, Sparkles, Clock, FileText, Loader2, Play, Square, Copy, Sun, Moon, CreditCard, Shield, RotateCcw, Plus } from "lucide-react"
+import { Mic, MicOff, Download, Sparkles, Clock, FileText, Loader2, Play, Square, Copy, Sun, Moon, CreditCard, Shield, RotateCcw, Plus, Monitor } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -49,10 +49,12 @@ interface Transcription {
 interface MediaRecorderState {
   stream: MediaStream;
   audioContext: AudioContext;
-  source: MediaStreamAudioSourceNode;
-  processor: ScriptProcessorNode;
+  source: MediaStreamAudioSourceNode | ChannelMergerNode;
+  processor: ScriptProcessorNode | null;
   audioChunks: Float32Array[];
   startTime: number;
+  micStream?: MediaStream;
+  systemStream?: MediaStream;
 }
 
 interface TranscriptionChunk {
@@ -86,7 +88,7 @@ const SPEAKER_COLORS = [
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const { takeNotes, refreshCredits } = useDashboard()
+  const { takeNotes, recordDeviceAudio, refreshCredits } = useDashboard()
   const { 
     credits, 
     loading: creditsLoading, 
@@ -297,41 +299,140 @@ export default function DashboardPage() {
       setTranscription([]);
       setCurrentText("");
       
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          deviceId: selectedMicrophone ? { exact: selectedMicrophone } : undefined,
-          channelCount: 1,
-          sampleRate: 16000
+      let stream: MediaStream;
+      
+      if (recordDeviceAudio) {
+        // Try to get both microphone and system audio
+        try {
+          // First, try to get system audio using getDisplayMedia
+          const displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: false,
+            audio: {
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false
+            }
+          });
+          
+          // Get microphone audio
+          const micStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              deviceId: selectedMicrophone ? { exact: selectedMicrophone } : undefined,
+              channelCount: 1,
+              sampleRate: 16000,
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+          
+          // Combine both streams
+          const audioContext = new AudioContext({
+            sampleRate: 16000,
+            latencyHint: 'interactive'
+          });
+          
+          const micSource = audioContext.createMediaStreamSource(micStream);
+          const systemSource = audioContext.createMediaStreamSource(displayStream);
+          
+          // Create a merger to combine the audio streams
+          const merger = audioContext.createChannelMerger(2);
+          micSource.connect(merger, 0, 0);
+          systemSource.connect(merger, 0, 1);
+          
+          // Create a destination stream
+          const destination = audioContext.createMediaStreamDestination();
+          merger.connect(destination);
+          
+          stream = destination.stream;
+          
+          // Store the original streams for cleanup
+          setMediaRecorder({
+            stream: destination.stream,
+            audioContext,
+            source: merger,
+            processor: null,
+            audioChunks: [],
+            startTime: Date.now(),
+            micStream,
+            systemStream: displayStream
+          });
+          
+        } catch (displayError) {
+          console.warn('Could not capture system audio, falling back to microphone only:', displayError);
+          // Fallback to microphone only
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              deviceId: selectedMicrophone ? { exact: selectedMicrophone } : undefined,
+              channelCount: 1,
+              sampleRate: 16000
+            }
+          });
+          
+          const audioContext = new AudioContext({
+            sampleRate: 16000,
+            latencyHint: 'interactive'
+          });
+          
+          const source = audioContext.createMediaStreamSource(stream);
+          const processor = audioContext.createScriptProcessor(16384, 1, 1);
+          
+          const audioChunks: Float32Array[] = [];
+          
+          processor.onaudioprocess = (e) => {
+            const inputData = e.inputBuffer.getChannelData(0);
+            audioChunks.push(new Float32Array(inputData));
+          };
+          
+          source.connect(processor);
+          processor.connect(audioContext.destination);
+          
+          setMediaRecorder({
+            stream,
+            audioContext,
+            source,
+            processor,
+            audioChunks,
+            startTime: Date.now()
+          });
         }
-      });
-      
-      const audioContext = new AudioContext({
-        sampleRate: 16000,
-        latencyHint: 'interactive'
-      });
-      
-      const source = audioContext.createMediaStreamSource(stream);
-      // Increase buffer size to reduce number of chunks
-      const processor = audioContext.createScriptProcessor(16384, 1, 1);
-      
-      const audioChunks: Float32Array[] = [];
-      
-      processor.onaudioprocess = (e) => {
-        const inputData = e.inputBuffer.getChannelData(0);
-        audioChunks.push(new Float32Array(inputData));
-      };
-      
-      source.connect(processor);
-      processor.connect(audioContext.destination);
-      
-      setMediaRecorder({
-        stream,
-        audioContext,
-        source,
-        processor,
-        audioChunks,
-        startTime: Date.now()
-      });
+      } else {
+        // Microphone only recording
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            deviceId: selectedMicrophone ? { exact: selectedMicrophone } : undefined,
+            channelCount: 1,
+            sampleRate: 16000
+          }
+        });
+        
+        const audioContext = new AudioContext({
+          sampleRate: 16000,
+          latencyHint: 'interactive'
+        });
+        
+        const source = audioContext.createMediaStreamSource(stream);
+        const processor = audioContext.createScriptProcessor(16384, 1, 1);
+        
+        const audioChunks: Float32Array[] = [];
+        
+        processor.onaudioprocess = (e) => {
+          const inputData = e.inputBuffer.getChannelData(0);
+          audioChunks.push(new Float32Array(inputData));
+        };
+        
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+        
+        setMediaRecorder({
+          stream,
+          audioContext,
+          source,
+          processor,
+          audioChunks,
+          startTime: Date.now()
+        });
+      }
       
       setIsRecording(true);
       console.log('Recording started');
@@ -351,14 +452,22 @@ export default function DashboardPage() {
   const stopRecording = async () => {
     if (!mediaRecorder) return;
     
-    const { stream, audioContext, source, processor, audioChunks, startTime } = mediaRecorder;
+    const { stream, audioContext, source, processor, audioChunks, startTime, micStream, systemStream } = mediaRecorder;
     
     // Disconnect audio nodes
     source.disconnect();
-    processor.disconnect();
+    if (processor) {
+      processor.disconnect();
+    }
     
     // Stop all tracks
     stream.getTracks().forEach(track => track.stop());
+    if (micStream) {
+      micStream.getTracks().forEach(track => track.stop());
+    }
+    if (systemStream) {
+      systemStream.getTracks().forEach(track => track.stop());
+    }
     
     // Calculate duration
     const duration = (Date.now() - startTime) / 1000;
@@ -1143,6 +1252,12 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2 w-full lg:w-auto lg:ml-2 animate-fade-in">
                   <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
                   <span className="font-mono text-sm text-red-700">Recording in progress</span>
+                  {recordDeviceAudio && (
+                    <span className="font-mono text-xs bg-blue-100 text-blue-700 rounded px-2 py-0.5 border border-blue-300">
+                      <Monitor className="w-3 h-3 inline mr-1" />
+                      Device Audio
+                    </span>
+                  )}
                   <span className="font-mono text-xs bg-gray-100 rounded px-2 py-0.5 ml-2 border border-gray-300">
                     {formatDuration(recordingDuration)}
                   </span>
@@ -1413,6 +1528,12 @@ export default function DashboardPage() {
           <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-red-50 dark:bg-red-950 rounded-lg">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="font-mono text-sm text-red-700 dark:text-red-300">Recording</span>
+            {recordDeviceAudio && (
+              <span className="font-mono text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded px-2 py-1 border border-blue-200 dark:border-blue-800">
+                <Monitor className="w-3 h-3 inline mr-1" />
+                Device Audio
+              </span>
+            )}
             <span className="font-mono text-xs bg-red-100 dark:bg-red-900 rounded px-2 py-1 border border-red-200 dark:border-red-800">
               {formatDuration(recordingDuration)}
             </span>

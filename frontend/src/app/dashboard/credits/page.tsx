@@ -24,6 +24,7 @@ export default function CreditsPage() {
   const [autoSummarize, setAutoSummarize] = useState(false)
   const [moreThanTwoSpeakers, setMoreThanTwoSpeakers] = useState(false)
   const [saveAudioToStorage, setSaveAudioToStorage] = useState(false)
+  const [recordDeviceAudio, setRecordDeviceAudio] = useState(false)
   const [takeNotes, setTakeNotes] = useState(false)
   const [supabaseModalOpen, setSupabaseModalOpen] = useState(false)
 
@@ -86,6 +87,8 @@ export default function CreditsPage() {
           onMoreThanTwoSpeakersChange={setMoreThanTwoSpeakers}
           saveAudioToStorage={saveAudioToStorage}
           onSaveAudioToStorageChange={setSaveAudioToStorage}
+          recordDeviceAudio={recordDeviceAudio}
+          onRecordDeviceAudioChange={setRecordDeviceAudio}
           onOpenSupabaseModal={() => setSupabaseModalOpen(true)}
           credits={credits}
           creditsLoading={loading}

@@ -8,7 +8,7 @@ import { useCredits } from "@/hooks/useCredits"
 import { useAuth } from "@/contexts/AuthContext"
 import { SupabaseConnectModal } from "@/components/supabase-connect-modal"
 import { isEnterpriseAdmin, hasEnterpriseAccess } from "@/lib/enterprise-api"
-import { Menu, RotateCcw, Sun, Moon, X, CreditCard, Mic, FileText, BookOpen, BarChart3, Sparkles, Users, Save, Database, Download, Settings, HelpCircle, Plus } from "lucide-react"
+import { Menu, RotateCcw, Sun, Moon, X, CreditCard, Mic, FileText, BookOpen, BarChart3, Sparkles, Users, Save, Database, Download, Settings, HelpCircle, Plus, Monitor } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -32,6 +32,8 @@ import {
 interface DashboardContextType {
   takeNotes: boolean;
   setTakeNotes: (value: boolean) => void;
+  recordDeviceAudio: boolean;
+  setRecordDeviceAudio: (value: boolean) => void;
   refreshCredits: () => Promise<void>;
   mobileSidebarOpen: boolean;
   setMobileSidebarOpen: (open: boolean) => void;
@@ -75,6 +77,7 @@ export default function DashboardLayout({
   const [autoSummarize, setAutoSummarize] = useState(false)
   const [moreThanTwoSpeakers, setMoreThanTwoSpeakers] = useState(false)
   const [saveAudioToStorage, setSaveAudioToStorage] = useState(false)
+  const [recordDeviceAudio, setRecordDeviceAudio] = useState(false)
   const [supabaseModalOpen, setSupabaseModalOpen] = useState(false)
   const [takeNotes, setTakeNotes] = useState(false)
 
@@ -87,6 +90,7 @@ export default function DashboardLayout({
       setAutoSummarize(localStorage.getItem("autoSummarize") === "true")
       setMoreThanTwoSpeakers(localStorage.getItem("moreThanTwoSpeakers") === "true")
       setSaveAudioToStorage(localStorage.getItem("saveAudioToStorage") === "true")
+      setRecordDeviceAudio(localStorage.getItem("recordDeviceAudio") === "true")
       setTakeNotes(localStorage.getItem("takeNotes") === "true")
     }
   }, [])
@@ -149,6 +153,11 @@ export default function DashboardLayout({
   }, [saveAudioToStorage])
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      localStorage.setItem("recordDeviceAudio", String(recordDeviceAudio))
+    }
+  }, [recordDeviceAudio])
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
       localStorage.setItem("takeNotes", String(takeNotes))
     }
   }, [takeNotes])
@@ -200,6 +209,8 @@ export default function DashboardLayout({
         <DashboardContext.Provider value={{ 
           takeNotes, 
           setTakeNotes, 
+          recordDeviceAudio,
+          setRecordDeviceAudio,
           refreshCredits,
           mobileSidebarOpen,
           setMobileSidebarOpen
@@ -231,6 +242,8 @@ export default function DashboardLayout({
                 onMoreThanTwoSpeakersChange={setMoreThanTwoSpeakers}
                 saveAudioToStorage={saveAudioToStorage}
                 onSaveAudioToStorageChange={setSaveAudioToStorage}
+                recordDeviceAudio={recordDeviceAudio}
+                onRecordDeviceAudioChange={setRecordDeviceAudio}
                 onOpenSupabaseModal={() => setSupabaseModalOpen(true)}
                 credits={credits}
                 creditsLoading={creditsLoading}
@@ -375,6 +388,19 @@ export default function DashboardLayout({
                           checked={moreThanTwoSpeakers}
                           onCheckedChange={setMoreThanTwoSpeakers}
                           aria-label="Toggle more than two speakers mode"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between space-x-2">
+                        <Label htmlFor="mobile-record-device-audio" className="flex items-center gap-2 font-normal cursor-help">
+                          <Monitor className="h-4 w-4" />
+                          <span className="font-normal">Record device audio</span>
+                        </Label>
+                        <Switch
+                          id="mobile-record-device-audio"
+                          checked={recordDeviceAudio}
+                          onCheckedChange={setRecordDeviceAudio}
+                          aria-label="Toggle device audio recording"
                         />
                       </div>
                     </div>
