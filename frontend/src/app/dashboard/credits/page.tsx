@@ -8,12 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreditCard, Clock, TrendingUp } from "lucide-react"
 import { useEffect, useState } from "react"
 import { AuthGuard } from "@/components/auth-guard"
+import { hasEnterpriseAccess } from "@/lib/enterprise-api"
 
 export default function CreditsPage() {
   const { user } = useAuth()
   const { credits, loading } = useCredits()
   const [isDark, setIsDark] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [hasEnterprise, setHasEnterprise] = useState(false)
   
   // Toggle states
   const [autoDownloadRecordings, setAutoDownloadRecordings] = useState(false)
@@ -32,6 +34,25 @@ export default function CreditsPage() {
         (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches));
     setIsDark(isDarkMode);
   }, []);
+
+  // Check enterprise status when user changes
+  useEffect(() => {
+    const checkEnterpriseStatus = async () => {
+      if (user) {
+        try {
+          const enterpriseStatus = await hasEnterpriseAccess()
+          setHasEnterprise(enterpriseStatus)
+        } catch (error) {
+          console.error("Error checking enterprise status:", error)
+          setHasEnterprise(false)
+        }
+      } else {
+        setHasEnterprise(false)
+      }
+    }
+    
+    checkEnterpriseStatus()
+  }, [user])
 
   const toggleTheme = () => {
     const html = document.documentElement;
@@ -76,6 +97,7 @@ export default function CreditsPage() {
             avatar: user.user_metadata?.avatar_url || undefined
           } : undefined}
           isAdmin={isAdmin}
+          hasEnterprise={hasEnterprise}
         />
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           <div className="max-w-6xl mx-auto space-y-6 lg:space-y-8">
