@@ -1,7 +1,8 @@
 "use client"
 import type * as React from "react"
 import Link from "next/link"
-import {
+import { usePathname } from "next/navigation"
+import { 
   BookOpen,
   Bot,
   Command,
@@ -30,6 +31,11 @@ import {
   HardDrive,
   CreditCard,
   RotateCcw,
+  ChevronDown,
+  ChevronRight,
+  X,
+  Plus,
+  HelpCircle,
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
@@ -52,6 +58,13 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { useEffect, useState } from "react"
+import { isEnterpriseAdmin } from "@/lib/enterprise-api"
+import { motion } from "framer-motion"
+
+import { useDashboard } from "@/app/dashboard/layout"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { CreditTopUpModal } from "@/components/credit-topup-modal"
 
 const data = {
   user: {
@@ -155,7 +168,6 @@ const data = {
     {
       title: "Feedback",
       url: "#",
-      icon: Send,
     },
   ],
   projects: [
@@ -172,54 +184,48 @@ const data = {
     {
       name: "Travel",
       url: "#",
-      icon: Map,
     },
   ],
 }
 
-// Navigation items
-const navigationItems = [
+// Navigation items without dropdown structure
+const getNavigationItems = (hasEnterprise: boolean, pathname: string) => [
   {
     title: "Audio Transcription",
     url: "/dashboard",
     icon: Mic,
-    isActive: true,
+    isActive: pathname === "/dashboard",
   },
   {
     title: "Transcription History",
     url: "/dashboard/transcriptions",
-    icon: History,
+    icon: FileText,
+    isActive: pathname === "/dashboard/transcriptions",
   },
   {
     title: "Notes History",
     url: "/dashboard/notes",
-    icon: FileText,
-  },
-  {
-    title: "Cost Information",
-    url: "/dashboard/cost-info",
-    icon: CreditCard,
-  },
-  {
-    title: "Credits",
-    url: "/dashboard/credits",
-    icon: CreditCard,
-  },
-  {
-    title: "File Upload",
-    url: "#",
-    icon: Upload,
+    icon: BookOpen,
+    isActive: pathname === "/dashboard/notes",
   },
   {
     title: "Analytics",
-    url: "#",
+    url: "/dashboard/analytics",
     icon: BarChart3,
+    isActive: pathname === "/dashboard/analytics",
   },
   {
     title: "Documentation",
     url: "/documentation",
-    icon: BookOpen,
+    icon: HelpCircle,
+    isActive: pathname.startsWith("/documentation"),
   },
+  ...(hasEnterprise ? [{
+    title: "Enterprise",
+    url: "/dashboard/enterprise",
+    icon: Users,
+    isActive: pathname === "/dashboard/enterprise",
+  }] : []),
 ]
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -247,6 +253,8 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     email: string;
     avatar?: string;
   };
+  isAdmin: boolean;
+  hasEnterprise: boolean;
 }
 
 export function AppSidebar({ 
@@ -270,10 +278,18 @@ export function AppSidebar({
   takeNotes,
   onTakeNotesChange,
   user,
+  isAdmin,
+  hasEnterprise,
   ...props 
 }: AppSidebarProps) {
-  return (
-    <Sidebar {...props}>
+  const pathname = usePathname()
+  const { setMobileSidebarOpen } = useDashboard()
+
+  const navigationItems = getNavigationItems(hasEnterprise, pathname)
+
+  // For mobile, we'll render the sidebar content directly without the Sheet wrapper
+  const sidebarContent = (
+    <div className="flex h-full w-full flex-col overflow-y-auto">
       <SidebarHeader>
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
@@ -281,60 +297,105 @@ export function AppSidebar({
             <h2 className="text-sidebar-foreground font-medium">Nexogen AI</h2>
           </div>
           
-          {/* Theme Toggle Button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onThemeToggle}
-                className="h-8 w-8 p-0"
-              >
-                {isDark ? (
-                  <Sun className="h-4 w-4" />
-                ) : (
-                  <Moon className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent sideOffset={8}>
-              <p>Toggle theme</p>
-            </TooltipContent>
-          </Tooltip>
+          <div className="flex items-center gap-2">
+            {/* Mobile close button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileSidebarOpen(false)}
+              className="lg:hidden h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            
+            {/* Theme Toggle Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onThemeToggle}
+                  className="h-8 w-8 p-0"
+                >
+                  {isDark ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={8}>
+                <p>Toggle theme</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
         
         {/* Credits Display */}
-        <div className="px-2 py-3 bg-gray-100 dark:bg-gray-800 rounded-lg mx-2 mb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-400">Credits</span>
-            </div>
-            <div className="text-right">
+        <div className="mx-2 mb-4">
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-t-lg px-2 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-400">Credits</span>
+              </div>
+                          <div className="text-right">
               <div className="text-lg font-bold text-gray-900 dark:text-gray-300">
                 {creditsLoading ? '...' : credits?.toFixed(2) || '0.00'}
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-500">$0.10/min</div>
+            </div>
             </div>
           </div>
+          <CreditTopUpModal>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full rounded-t-none border-t-0 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Top Up Credits
+            </Button>
+          </CreditTopUpModal>
         </div>
 
         {/* Transcription Mode Toggle */}
         {takeNotes !== undefined && onTakeNotesChange && (
-          <div className="px-2 mb-4">
+          <motion.div 
+            className="px-2 mb-4"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onTakeNotesChange(!takeNotes)}
-                  className="w-full flex items-center gap-2 font-medium bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 border-gray-300 dark:border-neutral-600"
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.1 }}
                 >
-                  <RotateCcw className={`h-4 w-4 transition-transform duration-300 ${takeNotes ? 'rotate-180' : ''}`} />
-                  <span className="text-sm">
-                    {takeNotes ? "Notes Mode" : "Transcription Mode"}
-                  </span>
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onTakeNotesChange(!takeNotes)}
+                    className="w-full flex items-center gap-2 font-medium bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 border-gray-300 dark:border-neutral-600"
+                  >
+                    <motion.div
+                      animate={{ rotate: takeNotes ? 180 : 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </motion.div>
+                    <motion.span 
+                      className="text-sm"
+                      key={takeNotes ? "notes" : "transcription"}
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {takeNotes ? "Notes Mode" : "Transcription Mode"}
+                    </motion.span>
+                  </Button>
+                </motion.div>
               </TooltipTrigger>
               <TooltipContent sideOffset={8} className="max-w-[300px]">
                 <p>
@@ -345,10 +406,10 @@ export function AppSidebar({
                 </p>
               </TooltipContent>
             </Tooltip>
-          </div>
+          </motion.div>
         )}
       </SidebarHeader>
-
+      
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -368,6 +429,7 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Tools Section */}
         <SidebarGroup>
           <SidebarGroupLabel>Tools</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -407,6 +469,7 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Data Safety Section */}
         <SidebarGroup>
           <SidebarGroupLabel>Data Safety</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -420,79 +483,96 @@ export function AppSidebar({
                   id="save-transcripts"
                   checked={saveTranscripts}
                   onCheckedChange={onSaveTranscriptsChange}
+                  aria-label="Toggle save transcripts"
                 />
               </div>
 
               <div className="flex items-center justify-between space-x-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Label htmlFor="save-audio-to-storage" className="flex items-center gap-2 font-normal cursor-help">
-                      <HardDrive className="h-4 w-4" />
-                      <span className="font-normal">Save recordings</span>
-                    </Label>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8} className="max-w-[300px]">
-                    <p>Save recorded audio files to Supabase Storage using S3 protocol. Files are stored securely in your bucket with full control over access and retention.</p>
-                  </TooltipContent>
-                </Tooltip>
+                <Label htmlFor="save-audio-to-storage" className="flex items-center gap-2 font-normal">
+                  <Database className="h-4 w-4" />
+                  <span className="font-normal">Save audio to storage</span>
+                </Label>
                 <Switch
                   id="save-audio-to-storage"
                   checked={saveAudioToStorage}
                   onCheckedChange={onSaveAudioToStorageChange}
-                  aria-label="Toggle audio storage to Supabase"
+                  aria-label="Toggle save audio to storage"
                 />
               </div>
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="auto-download-transcripts" className="flex items-center gap-2 font-normal">
-                  <Download className="h-4 w-4" />
-                  <span className="font-normal">Auto-download transcripts</span>
-                </Label>
-                <Switch
-                  id="auto-download-transcripts"
-                  checked={autoDownloadTranscripts}
-                  onCheckedChange={onAutoDownloadTranscriptsChange}
-                />
-              </div>
-
+        {/* Download Options Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Download Options</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <div className="space-y-4 px-4">
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="auto-download-recordings" className="flex items-center gap-2 font-normal">
-                  <FileDown className="h-4 w-4" />
+                  <Download className="h-4 w-4" />
                   <span className="font-normal">Auto-download recordings</span>
                 </Label>
                 <Switch
                   id="auto-download-recordings"
                   checked={autoDownloadRecordings}
                   onCheckedChange={onAutoDownloadRecordingsChange}
+                  aria-label="Toggle auto-download recordings"
+                />
+              </div>
+
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="auto-download-transcripts" className="flex items-center gap-2 font-normal">
+                  <FileText className="h-4 w-4" />
+                  <span className="font-normal">Auto-download transcripts</span>
+                </Label>
+                <Switch
+                  id="auto-download-transcripts"
+                  checked={autoDownloadTranscripts}
+                  onCheckedChange={onAutoDownloadTranscriptsChange}
+                  aria-label="Toggle auto-download transcripts"
                 />
               </div>
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Enterprise Section */}
+        {hasEnterprise && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Enterprise</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="space-y-4 px-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onOpenSupabaseModal}
+                  className="w-full flex items-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Configure Storage</span>
+                </Button>
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
-
       <SidebarFooter>
-        <Button 
-          variant="outline" 
-          className="w-full mt-4 flex items-center gap-2 font-medium bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 border-none" 
-          onClick={onOpenSupabaseModal}
-        >
-          <img src="/LogosSupabaseIcon.svg" alt="Supabase" className="w-4 h-4" />
-          Connect Supabase
-        </Button>
+        {user && (
+          <NavUser user={{
+            name: user.name,
+            email: user.email,
+            avatar: user.avatar || ""
+          }} />
+        )}
       </SidebarFooter>
-
-      <SidebarFooter>
-        <NavUser
-          user={{
-            name: user?.name || "John Doe",
-            email: user?.email || "john@example.com",
-            avatar: user?.avatar || "/avatars/01.png"
-          }}
-        />
-      </SidebarFooter>
-
       <SidebarRail />
+    </div>
+  )
+
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      {sidebarContent}
     </Sidebar>
   )
 }

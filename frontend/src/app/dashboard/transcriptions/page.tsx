@@ -445,37 +445,40 @@ export default function TranscriptionsPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-              <History className="h-8 w-8" />
-              Transcription History
-            </h1>
-            <p className="text-muted-foreground">
-              View and manage your saved transcriptions with encrypted security
+            <h1 className="text-2xl lg:text-3xl font-bold">Transcription History</h1>
+            <p className="text-muted-foreground mt-1">
+              View and manage your saved transcriptions
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Shield className="h-4 w-4 text-green-600" />
-              Encrypted
-            </Badge>
-            <Button 
-              variant="outline" 
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
               onClick={loadTranscriptions}
               disabled={loading}
+              variant="outline"
+              className="w-full sm:w-auto"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <History className="h-4 w-4" />}
-              Refresh
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <History className="mr-2 h-4 w-4" />
+                  Refresh
+                </>
+              )}
             </Button>
           </div>
         </div>
 
         {error && (
-          <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+          <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
             <CardContent className="pt-6">
-              <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                <AlertCircle className="h-5 w-5" />
+              <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                <AlertCircle className="h-4 w-4" />
                 <span>{error}</span>
               </div>
             </CardContent>
@@ -483,183 +486,145 @@ export default function TranscriptionsPage() {
         )}
 
         {loading ? (
-          <div className="text-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading transcriptions...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : transcriptions.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Transcriptions Found</h3>
+              <div className="text-center py-8">
+                <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No transcriptions found</h3>
                 <p className="text-muted-foreground mb-4">
-                  Your saved transcriptions will appear here once you start using the transcription feature.
+                  Your transcriptions will appear here once you start recording and saving them.
                 </p>
-                <Button onClick={() => window.location.href = '/dashboard'}>
-                  Start Transcribing
+                <Button asChild>
+                  <a href="/dashboard">Start Recording</a>
                 </Button>
               </div>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {transcriptions.map((transcription) => {
-              const isExpanded = expandedTranscription === transcription.id
-              const transcriptionText = getTranscriptionText(transcription.content)
-              const formattedText = getFormattedTranscription(transcription.content)
-              
-              return (
-                <Card key={transcription.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="flex items-center gap-2">
-                          <FileText className="h-5 w-5" />
-                          {transcription.title || `Transcription #${transcription.id.slice(-8)}`}
-                          {transcription.is_encrypted && (
-                            <Badge variant="secondary" className="flex items-center gap-1">
-                              <Lock className="h-3 w-3" />
-                              Encrypted
-                            </Badge>
-                          )}
-                          {transcription.decrypted && (
-                            <Badge variant="outline" className="flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3" />
-                              Decrypted
-                            </Badge>
-                          )}
-                          {transcription.error && (
-                            <Badge variant="destructive" className="flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3" />
-                              Error
-                            </Badge>
-                          )}
-                        </CardTitle>
-                        <CardDescription className="flex items-center gap-4 mt-2">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {formatDate(transcription.created_at)}
-                          </span>
-                          {transcription.duration && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              {formatDuration(transcription.duration)}
-                            </span>
-                          )}
-                          {transcription.credits_used && (
-                            <span className="flex items-center gap-1">
-                              <Shield className="h-4 w-4" />
-                              ${transcription.credits_used.toFixed(2)}
-                            </span>
-                          )}
-                          {getSpeakerCount(transcription.content) > 0 && (
-                            <span className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              {getSpeakerCount(transcription.content)} speakers
-                            </span>
-                          )}
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setExpandedTranscription(isExpanded ? null : transcription.id)}
-                          disabled={!!transcription.error}
-                        >
-                          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          {isExpanded ? 'Hide' : 'View'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => copyToClipboard(formattedText)}
-                          disabled={!!transcription.error}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => downloadTranscription(transcription, 'txt')}
-                          disabled={!!transcription.error}
-                        >
-                          <Download className="h-4 w-4" />
-                          TXT
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => downloadTranscription(transcription, 'json')}
-                          disabled={!!transcription.error}
-                        >
-                          <Download className="h-4 w-4" />
-                          JSON
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => generatePDF(transcription)}
-                          disabled={!!transcription.error}
-                        >
-                          <Download className="h-4 w-4" />
-                          PDF
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {transcription.error ? (
-                      <div className="text-red-600 dark:text-red-400 text-sm">
-                        Error: {transcription.error}
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* Preview */}
-                        <div>
-                          <ScrollArea className="h-20 w-full">
-                            <EditableText
-                              text={transcriptionText.length > 200 
-                                ? `${transcriptionText.substring(0, 200)}...` 
-                                : transcriptionText
-                              }
-                              itemId={transcription.id}
-                              itemType="transcription"
-                              encryptionKey={encryptionKey}
-                              onUpdate={loadTranscriptions}
-                              className="text-sm text-muted-foreground"
-                            />
-                          </ScrollArea>
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {transcriptions.map((transcription) => (
+              <Card key={transcription.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base lg:text-lg truncate">
+                        {transcription.title || `Transcription ${transcription.id.slice(0, 8)}`}
+                      </CardTitle>
+                      <CardDescription className="text-sm mt-1">
+                        <div className="flex items-center gap-2 text-xs">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(transcription.created_at)}
                         </div>
-                        
-                        {/* Expanded View */}
-                        {isExpanded && (
-                          <div className="border-t pt-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-medium">Full Transcription</h4>
-                              <Badge variant="outline" className="text-xs">
-                                {transcriptionText.split(' ').length} words
-                              </Badge>
-                            </div>
-                            <ScrollArea className="h-64 w-full border rounded-md p-4">
-                              <EditableText
-                                text={formattedText}
-                                itemId={transcription.id}
-                                itemType="transcription"
-                                encryptionKey={encryptionKey}
-                                onUpdate={loadTranscriptions}
-                                className="text-sm font-mono"
-                              />
-                            </ScrollArea>
-                          </div>
+                      </CardDescription>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      {transcription.is_encrypted && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Lock className="h-3 w-3 mr-1" />
+                          Encrypted
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="text-xs">
+                        <Shield className="h-3 w-3 mr-1" />
+                        {transcription.take_notes ? 'Notes' : 'Transcription'}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>{formatDuration(transcription.duration)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>{getSpeakerCount(transcription.content)} speakers</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Content Preview</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExpandedTranscription(
+                          expandedTranscription === transcription.id ? null : transcription.id
                         )}
+                        className="h-6 px-2 text-xs"
+                      >
+                        {expandedTranscription === transcription.id ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
+                    
+                    {expandedTranscription === transcription.id ? (
+                      <ScrollArea className="h-32 w-full rounded-md border p-2">
+                        <div className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {getTranscriptionText(transcription.content)}
+                        </div>
+                      </ScrollArea>
+                    ) : (
+                      <div className="text-xs text-muted-foreground line-clamp-2">
+                        {getTranscriptionText(transcription.content)}
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              )
-            })}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(getTranscriptionText(transcription.content))}
+                      className="flex-1 sm:flex-none text-xs"
+                    >
+                      <Copy className="mr-1 h-3 w-3" />
+                      Copy
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadTranscription(transcription, 'txt')}
+                      className="flex-1 sm:flex-none text-xs"
+                    >
+                      <Download className="mr-1 h-3 w-3" />
+                      Download TXT
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadTranscription(transcription, 'json')}
+                      className="flex-1 sm:flex-none text-xs"
+                    >
+                      <FileText className="mr-1 h-3 w-3" />
+                      Download JSON
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
 

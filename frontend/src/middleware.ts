@@ -45,6 +45,7 @@ export function middleware(request: NextRequest) {
     "font-src 'self' data:; " +
     "connect-src 'self' https:; " +
     "media-src 'self' blob: data:; " +
+    "frame-src 'self' https://www.youtube.com https://youtube.com; " +
     "frame-ancestors 'none';"
   )
 

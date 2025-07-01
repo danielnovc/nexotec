@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { Mic, MicOff, Download, Sparkles, Clock, FileText, Loader2, Play, Square, Copy, Sun, Moon, CreditCard, Shield } from "lucide-react"
+import { Mic, MicOff, Download, Sparkles, Clock, FileText, Loader2, Play, Square, Copy, Sun, Moon, CreditCard, Shield, RotateCcw, Plus } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -32,6 +33,7 @@ import {
 } from "@/lib/encryption"
 import { saveEncryptedTranscription, saveEncryptedNote } from "@/lib/supabase"
 import { useDashboard } from "./layout"
+import { CreditTopUpModal } from "@/components/credit-topup-modal"
 
 interface Transcription {
   id: string;
@@ -1084,6 +1086,8 @@ export default function DashboardPage() {
     navigator.clipboard.writeText(text);
   };
 
+
+
   // Map speakers to consistent color and alignment
   const speakerOrder: string[] = Array.from(
     new Set(transcription.map((item) => item.speaker || 'Unknown'))
@@ -1098,19 +1102,20 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-1 h-[100dvh] bg-[#f5faff] dark:bg-neutral-900">
-      <main className="flex-1 overflow-y-auto p-8 flex flex-col gap-8">
-        {/* Recording Controls */}
-        <Card className="shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-          <CardHeader>
-            <CardTitle>Audio Recording</CardTitle>
-            <CardDescription>
+      <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-32 lg:pb-8 flex flex-col gap-4 lg:gap-8">
+        
+        {/* Recording Controls - Hidden on mobile */}
+        <Card className="hidden lg:block shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg lg:text-xl">Audio Recording</CardTitle>
+            <CardDescription className="text-sm">
               Record audio for transcription
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col lg:flex-row lg:flex-wrap items-start lg:items-center gap-3 lg:gap-4">
               <Button
-                className={`transition-all duration-150 font-semibold focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white ${
+                className={`transition-all duration-150 font-semibold focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white w-full lg:w-auto h-12 lg:h-10 ${
                   isRecording
                     ? 'bg-red-600 hover:bg-red-700 text-white scale-105 shadow-lg'
                     : 'bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 shadow-md'
@@ -1132,9 +1137,10 @@ export default function DashboardPage() {
                   </>
                 )}
               </Button>
+              
               {/* Recording indicator and timer */}
               {isRecording && (
-                <div className="flex items-center gap-2 ml-2 animate-fade-in">
+                <div className="flex items-center gap-2 w-full lg:w-auto lg:ml-2 animate-fade-in">
                   <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
                   <span className="font-mono text-sm text-red-700">Recording in progress</span>
                   <span className="font-mono text-xs bg-gray-100 rounded px-2 py-0.5 ml-2 border border-gray-300">
@@ -1142,15 +1148,16 @@ export default function DashboardPage() {
                   </span>
                 </div>
               )}
+              
               <Select
                 value={selectedMicrophone}
                 onValueChange={handleMicrophoneChange}
               >
-                <SelectTrigger className="w-[240px] bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 font-semibold shadow-md border-none">
+                <SelectTrigger className="w-full lg:w-[240px] bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 font-semibold shadow-md border-none h-12 lg:h-10">
                   <Mic className="mr-2 h-4 w-4" />
                   <span>Microphone</span>
                 </SelectTrigger>
-                <SelectContent className="w-[240px] bg-white dark:bg-neutral-900">
+                <SelectContent className="w-full lg:w-[240px] bg-white dark:bg-neutral-900">
                   {availableMicrophones.map((mic) => (
                     <SelectItem key={mic.deviceId} value={mic.deviceId}>
                       {mic.label || `Microphone ${mic.deviceId.slice(0, 4)}`}
@@ -1158,83 +1165,100 @@ export default function DashboardPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button
-                className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 ml-2 font-semibold shadow-md"
-                variant="default"
-                size="lg"
-                onClick={clearTranscription}
-                disabled={transcription.length === 0}
-              >
-                Clear
-              </Button>
-              <Button
-                className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 ml-2 font-semibold shadow-md"
-                variant="default"
-                size="lg"
-                onClick={generateSummary}
-                disabled={transcription.length === 0 || isGeneratingSummary}
-              >
-                {isGeneratingSummary ? (
-                  <>
-                    <Loader size="sm" color="currentColor" className="mr-2" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generate Summary
-                  </>
-                )}
-              </Button>
-              <Button
-                className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 ml-2 font-semibold shadow-md"
-                variant="default"
-                size="lg"
-                onClick={downloadPDF}
-                disabled={transcription.length === 0 || isGeneratingPDF}
-              >
-                {isGeneratingPDF ? (
-                  <>
-                    <Loader size="sm" color="currentColor" className="mr-2" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Download PDF
-                  </>
-                )}
-              </Button>
+              
+              <div className="flex flex-col sm:flex-row gap-3 lg:gap-2 w-full lg:w-auto">
+                <Button
+                  className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 font-semibold shadow-md h-12 lg:h-10 flex-1 lg:flex-none"
+                  variant="default"
+                  size="lg"
+                  onClick={clearTranscription}
+                  disabled={transcription.length === 0}
+                >
+                  Clear
+                </Button>
+                <Button
+                  className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 font-semibold shadow-md h-12 lg:h-10 flex-1 lg:flex-none"
+                  variant="default"
+                  size="lg"
+                  onClick={generateSummary}
+                  disabled={transcription.length === 0 || isGeneratingSummary}
+                >
+                  {isGeneratingSummary ? (
+                    <>
+                      <Loader size="sm" color="currentColor" className="mr-2" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate Summary
+                    </>
+                  )}
+                </Button>
+                <Button
+                  className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 font-semibold shadow-md h-12 lg:h-10 flex-1 lg:flex-none"
+                  variant="default"
+                  size="lg"
+                  onClick={downloadPDF}
+                  disabled={transcription.length === 0 || isGeneratingPDF}
+                >
+                  {isGeneratingPDF ? (
+                    <>
+                      <Loader size="sm" color="currentColor" className="mr-2" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download PDF
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
         
         {/* Transcription Display */}
         <Card className="flex-1 flex flex-col shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-          <CardHeader>
-            <div className="flex items-center justify-between">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  {takeNotes ? "Notes" : "Transcription"}
-                  <Shield className="h-4 w-4 text-green-600" />
-                </CardTitle>
-                <CardDescription>
-                  {isRecording ? (
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                      Recording in progress...
-                    </div>
-                  ) : (
-                    takeNotes ? "Notes will appear here" : "Transcription will appear here"
-                  )}
-                </CardDescription>
+                <motion.div
+                  key={takeNotes ? "notes-title" : "transcription-title"}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <CardTitle className="flex items-center gap-2 text-lg lg:text-xl">
+                    {takeNotes ? "Notes" : "Transcription"}
+                    <Shield className="h-4 w-4 text-green-600" />
+                  </CardTitle>
+                </motion.div>
+                <motion.div
+                  key={takeNotes ? "notes-desc" : "transcription-desc"}
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                >
+                  <CardDescription className="text-sm">
+                    {isRecording ? (
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        Recording in progress...
+                      </div>
+                    ) : (
+                      takeNotes ? "Notes will appear here" : "Transcription will appear here"
+                    )}
+                  </CardDescription>
+                </motion.div>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleCopyTranscription}
                 disabled={transcription.length === 0}
-                className="border-black text-black dark:border-white dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95 transition-all duration-150"
+                className="border-black text-black dark:border-white dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95 transition-all duration-150 w-full sm:w-auto h-10"
               >
                 <Copy className="mr-2 h-4 w-4" />
                 Copy
@@ -1243,79 +1267,137 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="flex-1 flex flex-col relative">
             <ScrollArea className="flex-1 w-full">
-              {isProcessing ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-6">
-                    <Loader size="lg" color="currentColor" className="w-24 h-24" />
-                    <span className="text-lg font-medium text-muted-foreground">Processing audio...</span>
-                  </div>
-                </div>
-              ) : takeNotes ? (
-                <div className="flex flex-col gap-4 p-4">
-                  {transcription.length > 0 ? (
-                    <div className="prose dark:prose-invert max-w-none">
-                      {transcription.map((item, index) => (
-                        <div key={index} className="mb-4">
-                          <div className="text-sm whitespace-pre-line">{item.text}</div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {formatTimestamp(item.start)}
-                          </div>
-                        </div>
-                      ))}
+              <AnimatePresence mode="wait">
+                {isProcessing ? (
+                  <motion.div 
+                    key="processing"
+                    className="absolute inset-0 flex items-center justify-center"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  >
+                    <div className="flex flex-col items-center gap-6">
+                      <Loader size="lg" color="currentColor" className="w-16 h-16 lg:w-24 lg:h-24" />
+                      <span className="text-base lg:text-lg font-medium text-muted-foreground text-center">Processing audio...</span>
                     </div>
-                  ) : (
-                    <div className="text-muted-foreground text-sm">No notes generated yet.</div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {transcription.length > 0 ? (
-                    transcription.map((item, index) => {
-                      const speaker = item.speaker || 'Unknown';
-                      const speakerNumber = speaker.replace(/[^0-9]/g, '');
-                      const displaySpeaker = speakerNumber ? `Speaker ${parseInt(speakerNumber) + 1}` : speaker;
-                      const { color, align } = speakerMap[speaker] || { color: 'bg-gray-400', align: 'left' };
-                      return (
-                        <div
-                          key={index}
-                          className={`flex ${align === 'right' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-[70%] rounded-lg px-4 py-2 shadow bg-gray-50 dark:bg-neutral-900 flex items-start gap-2 ${
-                              align === 'right' ? 'flex-row-reverse' : ''
-                            }`}
+                  </motion.div>
+                ) : takeNotes ? (
+                  <motion.div 
+                    key="notes"
+                    className="flex flex-col gap-4 p-2 lg:p-4"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                  >
+                    {transcription.length > 0 ? (
+                      <motion.div 
+                        className="prose dark:prose-invert max-w-none"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.1 }}
+                      >
+                        {transcription.map((item, index) => (
+                          <motion.div 
+                            key={index} 
+                            className="mb-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.05 }}
                           >
-                            <span className={`mt-1 w-3 h-3 rounded-full ${color} shrink-0`}></span>
-                            <div>
-                              <div className="text-xs font-semibold text-muted-foreground mb-1">{displaySpeaker}</div>
-                              <div className="text-sm whitespace-pre-line">{item.text}</div>
-                              <span className="text-[10px] text-muted-foreground block mt-1">
-                                {formatTimestamp(item.start)}
-                              </span>
+                            <div className="text-sm whitespace-pre-line">{item.text}</div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {formatTimestamp(item.start)}
                             </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-muted-foreground text-sm">No transcription generated yet.</div>
-                  )}
-                </div>
-              )}
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        className="text-muted-foreground text-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        No notes generated yet.
+                      </motion.div>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="transcription"
+                    className="flex flex-col gap-3 lg:gap-4 p-2 lg:p-4"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                  >
+                    {transcription.length > 0 ? (
+                      transcription.map((item, index) => {
+                        const speaker = item.speaker || 'Unknown';
+                        const speakerNumber = speaker.replace(/[^0-9]/g, '');
+                        const displaySpeaker = speakerNumber ? `Speaker ${parseInt(speakerNumber) + 1}` : speaker;
+                        const { color, align } = speakerMap[speaker] || { color: 'bg-gray-400', align: 'left' };
+                        return (
+                          <motion.div
+                            key={index}
+                            className={`flex ${align === 'right' ? 'justify-end' : 'justify-start'}`}
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ 
+                              duration: 0.4, 
+                              delay: index * 0.1,
+                              ease: "easeOut"
+                            }}
+                          >
+                            <motion.div
+                              className={`max-w-[85%] lg:max-w-[70%] rounded-lg px-3 lg:px-4 py-2 shadow bg-gray-50 dark:bg-neutral-900 flex items-start gap-2 ${
+                                align === 'right' ? 'flex-row-reverse' : ''
+                              }`}
+                              whileHover={{ scale: 1.02 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <span className={`mt-1 w-3 h-3 rounded-full ${color} shrink-0`}></span>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-muted-foreground mb-1">{displaySpeaker}</div>
+                                <div className="text-sm whitespace-pre-line break-words">{item.text}</div>
+                                <span className="text-[10px] text-muted-foreground block mt-1">
+                                  {formatTimestamp(item.start)}
+                                </span>
+                              </div>
+                            </motion.div>
+                          </motion.div>
+                        );
+                      })
+                    ) : (
+                      <motion.div 
+                        className="text-muted-foreground text-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        No transcription generated yet.
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </ScrollArea>
           </CardContent>
         </Card>
+        
         {/* Summary Section always under Transcription */}
         <Card className="shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-          <CardHeader>
-            <CardTitle>Summary</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg lg:text-xl">Summary</CardTitle>
           </CardHeader>
           <CardContent>
             {summary ? (
               <Textarea
                 value={summary}
                 readOnly
-                className="min-h-[100px] bg-gray-50 dark:bg-neutral-900"
+                className="min-h-[100px] bg-gray-50 dark:bg-neutral-900 text-sm"
               />
             ) : (
               <div className="text-muted-foreground text-sm">No summary generated yet.</div>
@@ -1323,6 +1405,88 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Mobile Bottom Menu */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[80] bg-white dark:bg-neutral-950 border-t border-gray-200 dark:border-neutral-800 p-4 shadow-lg">
+        {/* Recording Timer - Mobile */}
+        {isRecording && (
+          <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-red-50 dark:bg-red-950 rounded-lg">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="font-mono text-sm text-red-700 dark:text-red-300">Recording</span>
+            <span className="font-mono text-xs bg-red-100 dark:bg-red-900 rounded px-2 py-1 border border-red-200 dark:border-red-800">
+              {formatDuration(recordingDuration)}
+            </span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-around">
+          {/* Recording Button */}
+          <div className="flex flex-col items-center">
+            <button
+              className={`w-12 h-12 rounded-full transition-all duration-300 flex items-center justify-center ${
+                isRecording
+                  ? 'bg-red-600 hover:bg-red-700 text-white scale-110'
+                  : 'bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200'
+              }`}
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={isProcessing}
+            >
+              {isRecording ? (
+                <Square className="h-6 w-6 animate-pulse" />
+              ) : (
+                <Mic className="h-6 w-6" />
+              )}
+            </button>
+            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">
+              {isRecording ? 'Stop' : 'Record'}
+            </span>
+          </div>
+
+          {/* Clear Button */}
+          <div className="flex flex-col items-center">
+            <button
+              onClick={clearTranscription}
+              disabled={transcription.length === 0}
+              className="w-12 h-12 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 flex items-center justify-center transition-all duration-200"
+            >
+              <RotateCcw className="h-6 w-6 text-gray-900 dark:text-gray-100" />
+            </button>
+            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">Clear</span>
+          </div>
+
+          {/* Generate Summary Button */}
+          <div className="flex flex-col items-center">
+            <button
+              onClick={generateSummary}
+              disabled={transcription.length === 0 || isGeneratingSummary}
+              className="w-12 h-12 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 flex items-center justify-center transition-all duration-200"
+            >
+              {isGeneratingSummary ? (
+                <Loader size="sm" color="currentColor" className="h-6 w-6" />
+              ) : (
+                <Sparkles className="h-6 w-6 text-gray-900 dark:text-gray-100" />
+              )}
+            </button>
+            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">Summary</span>
+          </div>
+
+          {/* Download PDF Button */}
+          <div className="flex flex-col items-center">
+            <button
+              onClick={downloadPDF}
+              disabled={transcription.length === 0 || isGeneratingPDF}
+              className="w-12 h-12 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 flex items-center justify-center transition-all duration-200"
+            >
+              {isGeneratingPDF ? (
+                <Loader size="sm" color="currentColor" className="h-6 w-6" />
+              ) : (
+                <FileText className="h-6 w-6 text-gray-900 dark:text-gray-100" />
+              )}
+            </button>
+            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">PDF</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

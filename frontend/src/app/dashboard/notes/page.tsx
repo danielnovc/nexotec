@@ -332,28 +332,31 @@ export default function NotesPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-              <FileText className="h-8 w-8" />
-              Notes History
-            </h1>
-            <p className="text-muted-foreground">
-              View and manage your saved notes with encrypted security
+            <h1 className="text-2xl lg:text-3xl font-bold">Notes</h1>
+            <p className="text-muted-foreground mt-1">
+              View and manage your saved notes
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Shield className="h-4 w-4 text-green-600" />
-              Encrypted
-            </Badge>
-            <Button 
-              variant="outline" 
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
               onClick={loadNotes}
               disabled={loading}
+              variant="outline"
+              className="w-full sm:w-auto"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              Refresh
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Refresh
+                </>
+              )}
             </Button>
           </div>
         </div>

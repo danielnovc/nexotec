@@ -1,20 +1,53 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { LoginForm } from "@/components/login-form"
 import { Loader } from "@/components/ui/loader"
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [errorShown, setErrorShown] = useState(false)
 
   useEffect(() => {
     if (!loading && user) {
       router.push("/dashboard")
     }
   }, [user, loading, router])
+
+  useEffect(() => {
+    // Handle OAuth errors
+    const error = searchParams.get('error')
+    const errorDescription = searchParams.get('error_description')
+    
+    if (error && !errorShown) {
+      setErrorShown(true)
+      let errorMessage = 'Authentication failed'
+      
+      switch (error) {
+        case 'access_denied':
+          errorMessage = 'Access was denied. Please try again.'
+          break
+        case 'invalid_request':
+          errorMessage = 'Invalid request. Please try again.'
+          break
+        case 'server_error':
+          errorMessage = 'Server error. Please try again later.'
+          break
+        case 'auth_callback_error':
+          errorMessage = 'Authentication callback failed. Please try again.'
+          break
+        default:
+          errorMessage = errorDescription || 'Authentication failed. Please try again.'
+      }
+      
+      toast.error(errorMessage)
+    }
+  }, [searchParams, errorShown])
 
   if (loading) {
     return (
