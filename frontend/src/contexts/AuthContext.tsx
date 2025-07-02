@@ -83,9 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider === 'linkedin' ? 'linkedin_oidc' : provider,
         options: {
-          redirectTo: provider === 'linkedin' || provider === 'linkedin_oidc'
-            ? 'https://npdsnsgxyhurwoyfrege.supabase.co/auth/v1/callback'
-            : `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       })
       

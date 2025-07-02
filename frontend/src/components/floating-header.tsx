@@ -25,11 +25,13 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import LanguageSwitcher from './language-switcher';
 
 interface FloatingHeaderProps {
   isDark: boolean;
   toggleTheme: () => void;
   scrollY: number;
+  currentLang?: string;
 }
 
 // Separate Logo Component for better customization
@@ -44,7 +46,7 @@ const Logo = ({ isDark }: { isDark: boolean }) => (
   </div>
 );
 
-export default function FloatingHeader({ isDark, toggleTheme, scrollY }: FloatingHeaderProps) {
+export default function FloatingHeader({ isDark, toggleTheme, scrollY, currentLang = "en" }: FloatingHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUseCasesOpen, setIsUseCasesOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -65,10 +67,10 @@ export default function FloatingHeader({ isDark, toggleTheme, scrollY }: Floatin
   ];
 
   const navItems = [
-    { name: 'Features', href: '#features', icon: <Layers className="w-4 h-4" /> },
-    { name: 'Security', href: '#security', icon: <Shield className="w-4 h-4" /> },
+    { name: 'Features', href: '/documentation/live-recording', icon: <Layers className="w-4 h-4" /> },
+    { name: 'Security', href: '/documentation/encryption', icon: <Shield className="w-4 h-4" /> },
     { name: 'Documentation', href: '/documentation', icon: <FileText className="w-4 h-4" /> },
-    { name: 'Pricing', href: '#pricing', icon: <Terminal className="w-4 h-4" /> }
+    { name: 'Pricing', href: '/documentation/pricing', icon: <Terminal className="w-4 h-4" /> }
   ];
 
   return (
@@ -159,6 +161,9 @@ export default function FloatingHeader({ isDark, toggleTheme, scrollY }: Floatin
                   Get Started
                 </Button>
               </Link>
+              
+              {/* Language Switcher */}
+              <LanguageSwitcher currentLang={currentLang} />
               
               {/* Theme Toggle */}
               <button

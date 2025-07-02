@@ -46,6 +46,58 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // Language-specific redirects for SEO
+  async redirects() {
+    return [
+      // Redirect old landing structure to new structure
+      {
+        source: '/landing',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/landing/de',
+        destination: '/de',
+        permanent: true,
+      },
+      {
+        source: '/landing/fr',
+        destination: '/fr',
+        permanent: true,
+      },
+      {
+        source: '/landing/es',
+        destination: '/es',
+        permanent: true,
+      },
+      {
+        source: '/landing/pr',
+        destination: '/pr',
+        permanent: true,
+      },
+      {
+        source: '/landing/pl',
+        destination: '/pl',
+        permanent: true,
+      },
+      {
+        source: '/landing/ru',
+        destination: '/ru',
+        permanent: true,
+      },
+      {
+        source: '/landing/ua',
+        destination: '/ua',
+        permanent: true,
+      },
+      {
+        source: '/landing/lt',
+        destination: '/lt',
+        permanent: true,
+      },
+    ];
+  },
+
   // Environment variables validation
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,

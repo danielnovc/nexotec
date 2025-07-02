@@ -50,8 +50,9 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import FloatingHeader from "@/components/floating-header"
+import StructuredData from "@/components/structured-data"
 
-export default function StreamLineLanding() {
+export default function RussianLandingPage() {
   const [isDark, setIsDark] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
@@ -126,12 +127,21 @@ export default function StreamLineLanding() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      {/* Structured Data for SEO */}
+      <StructuredData
+        lang="ru-RU"
+        title="Transcrib - Безопасная Транскрипция ИИ для Профессионалов"
+        description="Профессиональная транскрипция аудио с распознаванием речи и безопасные заметки"
+        url="https://nexogen.app/ru"
+        region="RU"
+      />
+      
       {/* Floating Header */}
       <FloatingHeader 
         isDark={isDark} 
         toggleTheme={toggleTheme} 
         scrollY={scrollY} 
-        currentLang="en"
+        currentLang="ru"
       />
 
       {/* Hero Section */}
@@ -153,18 +163,18 @@ export default function StreamLineLanding() {
             <div className="space-y-4 md:space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight md:leading-tight lg:leading-tight">
                 <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 dark:from-white dark:via-blue-100 dark:to-indigo-100 bg-clip-text text-transparent">
-                  Privacy-first Transcription
+                  Транскрипция с Приоритетом Конфиденциальности
                 </span>
                 <br />
                 <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-                  & Note-Taking for Professionals
+                  & Ведение Заметок для Профессионалов
                 </span>
               </h1>
               
               {/* Subtitle */}
               <p className="text-lg sm:text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-4xl mx-auto leading-relaxed">
-                Secure, GDPR & HIPAA-compliant AI audio transcription and note-taking with end-to-end encryption. 
-                <span className="font-semibold text-blue-600 dark:text-blue-400"> Complete data sovereignty</span> with maximum control over your information.
+                Безопасная транскрипция аудио ИИ и ведение заметок, соответствующие GDPR и HIPAA, с сквозным шифрованием. 
+                <span className="font-semibold text-blue-600 dark:text-blue-400"> Полный суверенитет данных</span> с максимальным контролем над вашей информацией.
               </p>
             </div>
 
@@ -172,15 +182,15 @@ export default function StreamLineLanding() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-slate-500 dark:text-slate-400">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-green-500" />
-                <span>End-to-End Encryption (AES-256 + TLS)</span>
+                <span>Сквозное Шифрование (AES-256 + TLS)</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>GDPR & HIPAA Compliant</span>
+                <span>Соответствует GDPR и HIPAA</span>
               </div>
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-green-500" />
-                <span>100+ Languages Supported</span>
+                <span>100+ Поддерживаемых Языков</span>
               </div>
             </div>
 
@@ -189,13 +199,13 @@ export default function StreamLineLanding() {
               <Link href="/login">
                 <Button size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-8 sm:px-10 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 transform hover:scale-105 touch-manipulation">
                   <Play className="w-5 h-5 mr-2" />
-                  Start Free Trial
+                  Начать Бесплатную Пробную Версию
                 </Button>
               </Link>
               <Link href="/documentation">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-8 sm:px-10 text-lg font-semibold border-2 border-slate-300 dark:border-slate-600 hover:border-blue-500 dark:hover:border-blue-400 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 transform hover:scale-105 touch-manipulation">
                   <BookOpen className="w-5 h-5 mr-2" />
-                  View Documentation
+                  Посмотреть Документацию
                 </Button>
               </Link>
             </div>
@@ -230,7 +240,7 @@ export default function StreamLineLanding() {
         </div>
       </section>
 
-      {/* Combined Features Section */}
+      {/* Раздел Комбинированных Функций */}
       <motion.section 
         initial="hidden"
         whileInView="visible"
@@ -253,11 +263,11 @@ export default function StreamLineLanding() {
           >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8">
               <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                Advanced Transcription & Note-Taking for Your Workflow
+                Расширенная Транскрипция и Ведение Заметок для Вашего Рабочего Процесса
               </span>
             </h2>
             <p className="text-lg md:text-xl text-gray-900 dark:text-white max-w-4xl mx-auto font-light px-4">
-              Discover secure, AI-powered tools designed for medical professionals, therapists, lawyers, and business professionals, with speaker recognition and multilingual support.
+              Откройте безопасные инструменты на базе ИИ, разработанные для медицинских работников, терапевтов, юристов и бизнес-профессионалов, с распознаванием говорящего и многоязычной поддержкой.
             </p>
           </motion.div>
           
@@ -272,43 +282,43 @@ export default function StreamLineLanding() {
             {[
               {
                 icon: <Shield className="w-10 h-10" />,
-                title: "Secure Transcription for Professionals",
-                description: "Transcribe audio with speaker recognition and segmentation, protected by GDPR and HIPAA-compliant encryption with end-to-end security for medical and legal workflows.",
+                title: "Безопасная Транскрипция для Профессионалов",
+                description: "Транскрибируйте аудио с распознаванием говорящего и сегментацией, защищенное шифрованием, соответствующим GDPR и HIPAA, с сквозной безопасностью для медицинских и юридических рабочих процессов.",
                 gradient: "from-cyan-400 to-blue-600",
                 delay: "0ms"
               },
               {
                 icon: <FileEdit className="w-10 h-10" />,
-                title: "Multilingual Note-Taking",
-                description: "Create notes and summaries in 100+ languages with 99.5% accuracy, ideal for therapists and global business teams with end-to-end encrypted storage.",
+                title: "Многоязычное Ведение Заметок",
+                description: "Создавайте заметки и резюме более чем на 100 языках с 99,5% точностью, идеально для терапевтов и глобальных бизнес-команд с сквозным зашифрованным хранением.",
                 gradient: "from-purple-400 to-pink-600",
                 delay: "100ms"
               },
               {
                 icon: <Waves className="w-10 h-10" />,
-                title: "Crystal Clear Audio Processing",
-                description: "Noise-canceling technology ensures flawless transcription and note-taking in any environment, from clinics to boardrooms, with secure end-to-end processing.",
+                title: "Кристально Чистая Обработка Аудио",
+                description: "Технология шумоподавления обеспечивает безупречную транскрипцию и ведение заметок в любой среде, от клиник до залов заседаний, с безопасной сквозной обработкой.",
                 gradient: "from-green-400 to-teal-600",
                 delay: "200ms"
               },
               {
                 icon: <Sparkles className="w-10 h-10" />,
-                title: "Smart Summarization",
-                description: "Generate context-aware summaries and notes with speaker recognition, streamlining documentation for busy professionals with end-to-end encrypted AI processing.",
+                title: "Умное Резюмирование",
+                description: "Генерируйте контекстно-осведомленные резюме и заметки с распознаванием говорящего, оптимизируя документацию для занятых профессионалов с зашифрованной ИИ-обработкой сквозного типа.",
                 gradient: "from-orange-400 to-red-600",
                 delay: "300ms"
               },
               {
                 icon: <Server className="w-10 h-10" />,
-                title: "EU-Based Data Security",
-                description: "Hosted on secure European servers with end-to-end encryption, ensuring complete data sovereignty for all transcriptions and notes.",
+                title: "Безопасность Данных на Базе ЕС",
+                description: "Размещено на безопасных европейских серверах с сквозным шифрованием, обеспечивая полный суверенитет данных для всех транскрипций и заметок.",
                 gradient: "from-indigo-400 to-purple-600",
                 delay: "400ms"
               },
               {
                 icon: <UserCheck className="w-10 h-10" />,
-                title: "Speaker Recognition",
-                description: "Advanced speaker identification and segmentation for accurate, professional-grade transcriptions and notes with end-to-end encrypted processing.",
+                title: "Распознавание Говорящего",
+                description: "Расширенная идентификация и сегментация говорящего для точных транскрипций и заметок профессионального уровня с зашифрованной обработкой сквозного типа.",
                 gradient: "from-yellow-400 to-orange-600",
                 delay: "500ms"
               }
@@ -351,15 +361,15 @@ export default function StreamLineLanding() {
             className="text-center mb-12 md:mb-16"
           >
             <div className="inline-block mb-4 md:mb-6">
-              <span className="text-purple-400 font-mono text-sm tracking-wider bg-purple-500/10 px-4 py-2 rounded-full">[COMPARISON]</span>
+              <span className="text-purple-400 font-mono text-sm tracking-wider bg-purple-500/10 px-4 py-2 rounded-full">[СРАВНЕНИЕ]</span>
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8">
               <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                Why Nexogen Is the Professional's Choice
+                Почему Nexogen является Выбором Профессионалов
               </span>
             </h2>
             <p className="text-lg md:text-xl text-gray-900 dark:text-white max-w-4xl mx-auto font-light px-4">
-              Compare Nexogen's secure, multilingual transcription and note-taking to other web-based services in one glance.
+              Сравните безопасную многоязычную транскрипцию и ведение заметок Nexogen с другими веб-сервисами одним взглядом.
             </p>
           </motion.div>
 
@@ -383,27 +393,27 @@ export default function StreamLineLanding() {
                 <ul className="space-y-3 md:space-y-4">
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">GDPR and HIPAA-compliant, EU-based servers, no third-party data sharing</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Соответствует GDPR и HIPAA, серверы на базе ЕС, без обмена данными с третьими сторонами</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">100+ languages supported for transcription and notes</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Поддержка более 100 языков для транскрипции и заметок</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Speaker recognition and segmentation with 99.5% accuracy</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Распознавание говорящего и сегментация с 99,5% точностью</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Open-source self-hosted models with complete data control</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Модели с открытым исходным кодом с самохостингом с полным контролем данных</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Clear documentation and fully auditable AI models</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Четкая документация и полностью проверяемые ИИ-модели</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Transparent pricing, no hidden costs</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Прозрачные цены, без скрытых затрат</span>
                   </li>
                 </ul>
               </div>
@@ -434,32 +444,32 @@ export default function StreamLineLanding() {
                   <div className="p-2 md:p-3 rounded-xl md:rounded-2xl bg-gray-800">
                     <Globe className="w-6 h-6 md:w-8 md:h-8 text-gray-400" />
                   </div>
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-400">Other Services</h3>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-400">Другие Сервисы</h3>
                 </div>
                 <ul className="space-y-3 md:space-y-4">
                   <li className="flex items-start gap-3">
                     <X className="w-5 h-5 md:w-6 md:h-6 text-red-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Often lack GDPR/HIPAA compliance, data processed on non-EU servers</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Часто не соответствуют GDPR/HIPAA, данные обрабатываются на серверах вне ЕС</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <X className="w-5 h-5 md:w-6 md:h-6 text-red-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Limited to 10–60 languages, often English-focused</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Ограничены 10-60 языками, часто ориентированы на английский</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <X className="w-5 h-5 md:w-6 md:h-6 text-red-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Basic transcription, no advanced speaker recognition</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Базовая транскрипция, без расширенного распознавания говорящего</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <X className="w-5 h-5 md:w-6 md:h-6 text-red-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Weak or no end-to-end encryption for data protection</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Слабое или отсутствующее сквозное шифрование для защиты данных</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <X className="w-5 h-5 md:w-6 md:h-6 text-red-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Rely on third-party APIs (OpenAI, Google, etc.) for processing</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Полагаются на API третьих сторон (OpenAI, Google и т.д.) для обработки</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <X className="w-5 h-5 md:w-6 md:h-6 text-red-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">No transparency into AI model training or data usage</span>
+                    <span className="text-sm md:text-lg text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200">Нет прозрачности в обучении ИИ-моделей или использовании данных</span>
                   </li>
                 </ul>
               </div>
@@ -474,7 +484,7 @@ export default function StreamLineLanding() {
             className="text-center px-4 mb-20 md:mb-32"
           >
             <p className="text-lg md:text-xl text-gray-900 dark:text-white max-w-4xl mx-auto leading-relaxed">
-              Nexogen delivers unmatched security and flexibility for professionals. Unlike other services that rely on third-party APIs, our open-source self-hosted models ensure precise transcription with speaker recognition and intelligent note-taking in 100+ languages, all backed by GDPR and HIPAA compliance with complete data control.
+              Nexogen обеспечивает непревзойденную безопасность и гибкость для профессионалов. В отличие от других сервисов, которые полагаются на API третьих сторон, наши модели с открытым исходным кодом с самохостингом обеспечивают точную транскрипцию с распознаванием говорящего и умное ведение заметок более чем на 100 языках, все поддерживается соответствием GDPR и HIPAA с полным контролем данных.
             </p>
           </motion.div>
 
@@ -487,15 +497,15 @@ export default function StreamLineLanding() {
             className="text-center mb-12 md:mb-20"
           >
             <div className="inline-block mb-4 md:mb-6">
-              <span className="text-blue-400 font-mono text-sm tracking-wider bg-blue-500/10 px-4 py-2 rounded-full">[PROFESSIONALS]</span>
+              <span className="text-blue-400 font-mono text-sm tracking-wider bg-blue-500/10 px-4 py-2 rounded-full">[ПРОФЕССИОНАЛЫ]</span>
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8">
               <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                Why Professionals Choose Nexogen
+                Почему Профессионалы Выбирают Nexogen
               </span>
             </h2>
             <p className="text-lg md:text-xl text-gray-900 dark:text-white max-w-5xl mx-auto font-light px-4">
-              Tailored for medical professionals, therapists, lawyers, and business professionals, Nexogen simplifies your workflow with secure, AI-driven tools.
+              Создано для медицинских работников, терапевтов, юристов и бизнес-профессионалов, Nexogen упрощает ваш рабочий процесс с помощью безопасных инструментов на базе ИИ.
             </p>
           </motion.div>
 
@@ -503,43 +513,43 @@ export default function StreamLineLanding() {
             {[
               {
                 icon: <Shield className="w-8 h-8 md:w-10 md:h-10" />,
-                title: "Medical Professionals",
-                subtitle: "Doctors & Clinicians",
-                description: "Streamline patient documentation with HIPAA-compliant transcription and note-taking, perfect for doctors and clinicians.",
+                title: "Медицинские Работники",
+                subtitle: "Врачи и Клиницисты",
+                description: "Оптимизируйте документацию пациентов с помощью транскрипции и ведения заметок, соответствующих HIPAA, идеально для врачей и клиницистов.",
                 gradient: "from-blue-500 to-cyan-600",
                 bgGradient: "from-blue-500/10 to-cyan-600/10",
                 borderGradient: "from-blue-500/20 to-cyan-600/20",
-                features: ["HIPAA Compliant", "Patient Documentation", "Clinical Notes"]
+                features: ["Соответствует HIPAA", "Документация Пациентов", "Клинические Заметки"]
               },
               {
                 icon: <Users className="w-8 h-8 md:w-10 md:h-10" />,
-                title: "Therapists",
-                subtitle: "Counselors & Psychologists",
-                description: "Capture therapy sessions with secure transcription and multilingual notes in 100+ languages, designed for counselors and psychologists.",
+                title: "Терапевты",
+                subtitle: "Консультанты и Психологи",
+                description: "Захватывайте терапевтические сессии с безопасной транскрипцией и многоязычными заметками более чем на 100 языках, разработано для консультантов и психологов.",
                 gradient: "from-purple-500 to-pink-600",
                 bgGradient: "from-purple-500/10 to-pink-600/10",
                 borderGradient: "from-purple-500/20 to-pink-600/20",
-                features: ["100+ Languages", "Session Recording", "Secure Notes"]
+                features: ["100+ Языков", "Запись Сессий", "Безопасные Заметки"]
               },
               {
                 icon: <FileText className="w-8 h-8 md:w-10 md:h-10" />,
-                title: "Lawyers",
-                subtitle: "Legal Professionals",
-                description: "Transcribe depositions and meetings with speaker recognition, ensuring GDPR-compliant accuracy for legal professionals.",
+                title: "Юристы",
+                subtitle: "Юридические Профессионалы",
+                description: "Транскрибируйте показания и встречи с распознаванием говорящего, обеспечивая точность, соответствующую GDPR, для юридических профессионалов.",
                 gradient: "from-green-500 to-emerald-600",
                 bgGradient: "from-green-500/10 to-emerald-600/10",
                 borderGradient: "from-green-500/20 to-emerald-600/20",
-                features: ["GDPR Compliant", "Speaker Recognition", "Legal Accuracy"]
+                features: ["Соответствует GDPR", "Распознавание Говорящего", "Юридическая Точность"]
               },
               {
                 icon: <BarChart3 className="w-8 h-8 md:w-10 md:h-10" />,
-                title: "Business Professionals",
-                subtitle: "Executives & Teams",
-                description: "Boost productivity with AI-powered notes and summaries in 100+ languages, ideal for global teams and executives.",
+                title: "Бизнес-Профессионалы",
+                subtitle: "Руководители и Команды",
+                description: "Повышайте продуктивность с помощью заметок и резюме на базе ИИ более чем на 100 языках, идеально для глобальных команд и руководителей.",
                 gradient: "from-orange-500 to-red-600",
                 bgGradient: "from-orange-500/10 to-red-600/10",
                 borderGradient: "from-orange-500/20 to-red-600/20",
-                features: ["AI Summaries", "Global Teams", "Productivity Boost"]
+                features: ["ИИ-Резюме", "Глобальные Команды", "Повышение Продуктивности"]
               }
             ].map((benefit, index) => (
               <motion.div
@@ -601,7 +611,7 @@ export default function StreamLineLanding() {
                       size="sm" 
                       className={`w-full border-2 group-hover:border-transparent group-hover:bg-gradient-to-r ${benefit.gradient} group-hover:text-white transition-all duration-300 text-sm md:text-base`}
                     >
-                      Learn More
+                      Узнать Больше
                       <ArrowRight className="ml-2 h-3 w-3 md:h-4 md:w-4 group-hover:translate-x-1 transition-transform duration-300" />
                     </Button>
                   </div>
@@ -629,22 +639,22 @@ export default function StreamLineLanding() {
           <div className="space-y-6 md:space-y-8">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
               <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                Start Secure Transcription & Note-Taking Today
+                Начните Безопасную Транскрипцию и Ведение Заметок Сегодня
               </span>
             </h2>
             <p className="text-lg md:text-xl text-gray-900 dark:text-white px-4">
-              Join 2,500+ medical professionals, therapists, lawyers, and business professionals using Nexogen for GDPR and HIPAA-compliant transcription and note-taking in 100+ languages. Try free now.
+              Присоединяйтесь к более чем 2,500 медицинским работникам, терапевтам, юристам и бизнес-профессионалам, использующим Nexogen для транскрипции и ведения заметок, соответствующих GDPR и HIPAA, более чем на 100 языках. Попробуйте бесплатно сейчас.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
               <Link href="/login" className="w-full sm:w-auto">
                 <Button size="lg" className="text-base md:text-lg px-6 md:px-8 h-12 w-full sm:w-auto bg-gradient-to-r from-primary to-primary/60 hover:from-primary/90 hover:to-primary/50">
-                  Try Secure Transcription & Notes Free
+                  Попробовать Безопасную Транскрипцию и Заметки Бесплатно
                   <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
                 </Button>
               </Link>
               <Link href="https://calendly.com/nexogenlabs/30min" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                 <Button size="lg" variant="outline" className="text-base md:text-lg px-6 md:px-8 h-12 w-full sm:w-auto">
-                  Book a Free Demo
+                  Забронировать Бесплатную Демо
                 </Button>
               </Link>
             </div>
@@ -670,7 +680,7 @@ export default function StreamLineLanding() {
                 <span className="text-xl font-bold">Nexogen</span>
               </div>
               <p className="text-muted-foreground max-w-xs">
-                Nexogen AI delivers GDPR and HIPAA-compliant transcription with speaker recognition and secure note-taking for medical professionals, therapists, lawyers, and business professionals.
+                Nexogen AI обеспечивает транскрипцию, соответствующую GDPR и HIPAA, с распознаванием говорящего и безопасным ведением заметок для медицинских работников, терапевтов, юристов и бизнес-профессионалов.
               </p>
               <div className="flex space-x-4">
                 <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -689,16 +699,16 @@ export default function StreamLineLanding() {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Product</h3>
+              <h3 className="text-lg font-semibold">Продукт</h3>
               <div className="space-y-2">
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Features
+                  Функции
                 </Link>
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Pricing
+                  Цены
                 </Link>
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Integrations
+                  Интеграции
                 </Link>
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
                   API
@@ -707,53 +717,53 @@ export default function StreamLineLanding() {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Company</h3>
+              <h3 className="text-lg font-semibold">Компания</h3>
               <div className="space-y-2">
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  About
+                  О Нас
                 </Link>
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Blog
+                  Блог
                 </Link>
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Case Studies
+                  Кейсы
                 </Link>
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Contact
+                  Контакты
                 </Link>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Support</h3>
+              <h3 className="text-lg font-semibold">Поддержка</h3>
               <div className="space-y-2">
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Help Center
+                  Центр Помощи
                 </Link>
                 <Link href="/documentation" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Documentation
+                  Документация
                 </Link>
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Language Support Guide
+                  Гид по Языковой Поддержке
                 </Link>
                 <Link href="#" className="block text-muted-foreground hover:text-foreground transition-colors">
-                  Security
+                  Безопасность
                 </Link>
               </div>
             </div>
           </div>
 
           <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-muted-foreground text-sm">© {new Date().getFullYear()} Nexogen. All rights reserved.</p>
+            <p className="text-muted-foreground text-sm">© {new Date().getFullYear()} Nexogen. Все права защищены.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <Link href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
-                Privacy Policy
+                Политика Конфиденциальности
               </Link>
               <Link href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
-                Terms of Service
+                Условия Использования
               </Link>
               <Link href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
-                Cookie Policy
+                Политика Файлов Cookie
               </Link>
             </div>
           </div>

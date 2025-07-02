@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -42,7 +43,9 @@ export default function PricingPage() {
                   <li>• All features included</li>
                   <li>• Standard processing time</li>
                 </ul>
-                <Button className="w-full">Get Started</Button>
+                <Link href="/login">
+                  <Button className="w-full">Get Started</Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -62,7 +65,9 @@ export default function PricingPage() {
                   <li>• Email support</li>
                   <li>• Cloud storage (5GB)</li>
                 </ul>
-                <Button className="w-full">Choose Plan</Button>
+                <Link href="/login">
+                  <Button className="w-full">Choose Plan</Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -81,7 +86,9 @@ export default function PricingPage() {
                   <li>• Priority support</li>
                   <li>• Cloud storage (50GB)</li>
                 </ul>
-                <Button className="w-full">Contact Sales</Button>
+                <Link href="/login">
+                  <Button className="w-full">Contact Sales</Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -114,8 +121,12 @@ export default function PricingPage() {
                 Get in touch with our sales team to discuss your requirements and receive a custom quote.
               </p>
               <div className="space-y-2">
-                <Button className="w-full">Contact Sales Team</Button>
-                <Button variant="outline" className="w-full">Schedule Demo</Button>
+                <Link href="mailto:sales@nexogen.app">
+                  <Button className="w-full">Contact Sales Team</Button>
+                </Link>
+                <Link href="mailto:demo@nexogen.app">
+                  <Button variant="outline" className="w-full">Schedule Demo</Button>
+                </Link>
               </div>
             </div>
           </div>
