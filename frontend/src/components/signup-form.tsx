@@ -49,10 +49,10 @@ export function SignupForm({
     }
   }
 
-  const handleOAuthSignIn = async (provider: 'google' | 'linkedin') => {
+  const handleOAuthSignIn = async (provider: 'google' | 'linkedin' | 'linkedin_oidc') => {
     setIsOAuthLoading(provider)
     try {
-      await signInWithProvider(provider)
+      await signInWithProvider(provider === 'linkedin' ? 'linkedin_oidc' : provider)
       // The redirect will happen automatically
     } catch (error) {
       console.error(`${provider} sign in error:`, error)

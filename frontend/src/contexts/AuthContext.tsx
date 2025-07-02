@@ -75,15 +75,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Current origin:', window.location.origin);
     
     // Check if this is LinkedIn OIDC
-    if (provider === 'linkedin') {
+    if (provider === 'linkedin' || provider === 'linkedin_oidc') {
       console.log('Using LinkedIn OIDC provider');
     }
     
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
+        provider: provider === 'linkedin' ? 'linkedin_oidc' : provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: provider === 'linkedin' || provider === 'linkedin_oidc'
+            ? 'https://npdsnsgxyhurwoyfrege.supabase.co/auth/v1/callback'
+            : `${window.location.origin}/auth/callback`
         }
       })
       
