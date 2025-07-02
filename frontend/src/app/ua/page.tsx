@@ -163,18 +163,13 @@ export default function UkrainianLandingPage() {
             <div className="space-y-4 md:space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight md:leading-tight lg:leading-tight">
                 <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 dark:from-white dark:via-blue-100 dark:to-indigo-100 bg-clip-text text-transparent">
-                  Транскрипція з Пріоритетом Конфіденційності
-                </span>
-                <br />
-                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-                  & Ведення Нотаток для Професіоналів
+                  Транскрипція Аудіо та Нотатки з Пріоритетом Конфіденційності для Професіоналів
                 </span>
               </h1>
               
               {/* Subtitle */}
               <p className="text-lg sm:text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-4xl mx-auto leading-relaxed">
-                Безпечна транскрипція аудіо ШІ та ведення нотаток, що відповідають GDPR та HIPAA, з сквозним шифруванням. 
-                <span className="font-semibold text-blue-600 dark:text-blue-400"> Повний суверенітет даних</span> з максимальним контролем над вашою інформацією.
+                Безпечна транскрипція аудіо та ведення нотаток за допомогою ШІ, що відповідає GDPR і HIPAA, з наскрізним шифруванням. Повний суверенітет даних із максимальним контролем над вашою інформацією.
               </p>
             </div>
 

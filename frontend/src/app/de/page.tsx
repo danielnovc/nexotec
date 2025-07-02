@@ -163,18 +163,13 @@ export default function GermanLandingPage() {
             <div className="space-y-4 md:space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight md:leading-tight lg:leading-tight">
                 <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 dark:from-white dark:via-blue-100 dark:to-indigo-100 bg-clip-text text-transparent">
-                  Sichere Transkription
-                </span>
-                <br />
-                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-                  & Notizen für Profis
+                  Datenschutzorientierte Audio-Transkription und Notizen für Profis
                 </span>
               </h1>
               
               {/* Subtitle */}
               <p className="text-lg sm:text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-4xl mx-auto leading-relaxed">
-                Professionelle Audiotranskription und Notizen mit KI - DSGVO- und HIPAA-konform mit Ende-zu-Ende-Verschlüsselung. 
-                <span className="font-semibold text-blue-600 dark:text-blue-400"> Ihre Daten bleiben bei Ihnen</span> - volle Kontrolle und Sicherheit.
+                Sichere, DSGVO- und HIPAA-konforme KI-Audio-Transkription und Notizen mit durchgehender Verschlüsselung. Volle Datensouveränität mit maximaler Kontrolle über Ihre Informationen.
               </p>
             </div>
 

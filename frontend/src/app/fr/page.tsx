@@ -163,18 +163,13 @@ export default function FrenchLandingPage() {
             <div className="space-y-4 md:space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight md:leading-tight lg:leading-tight">
                 <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 dark:from-white dark:via-blue-100 dark:to-indigo-100 bg-clip-text text-transparent">
-                  Transcription Respectueuse de la Vie Privée
-                </span>
-                <br />
-                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-                  & Prise de Notes pour Professionnels
+                  Transcription Audio et Prise de Notes Axées sur la Confidentialité pour les Professionnels
                 </span>
               </h1>
               
               {/* Subtitle */}
               <p className="text-lg sm:text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-4xl mx-auto leading-relaxed">
-                Transcription audio sécurisée et prise de notes conformes au RGPD et HIPAA avec chiffrement de bout en bout. 
-                <span className="font-semibold text-blue-600 dark:text-blue-400"> Souveraineté complète des données</span> avec un contrôle maximal sur vos informations.
+                Transcription audio et prise de notes par IA sécurisée, conforme au RGPD et à HIPAA, avec un chiffrement de bout en bout. Souveraineté totale des données avec un contrôle maximal sur vos informations.
               </p>
             </div>
 
