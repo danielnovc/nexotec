@@ -17,11 +17,17 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        console.log('=== Auth Callback Debug ===')
+        console.log('URL search params:', Object.fromEntries(searchParams.entries()))
+        console.log('Current user:', user)
+        console.log('Auth loading:', loading)
+        
         // Check for error in URL params
         const errorParam = searchParams.get('error')
         const errorDescription = searchParams.get('error_description')
         
         if (errorParam) {
+          console.error('OAuth error:', errorParam, errorDescription)
           setError(errorDescription || 'Authentication failed')
           toast.error(errorDescription || 'Authentication failed')
           setTimeout(() => {
@@ -33,6 +39,7 @@ function AuthCallbackContent() {
         // Check for authorization code
         const code = searchParams.get('code')
         if (code) {
+          console.log('Found authorization code, exchanging for session...')
           // Exchange code for session
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
           if (exchangeError) {
@@ -44,10 +51,30 @@ function AuthCallbackContent() {
             }, 3000)
             return
           }
+          console.log('Code exchanged successfully')
+          
+          // Wait for the session to be properly set
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          
+          // Get the current session to verify
+          const { data: { session } } = await supabase.auth.getSession()
+          console.log('Current session after exchange:', session)
+          
+          if (session) {
+            console.log('Session confirmed, redirecting to dashboard...')
+            setIsProcessing(false)
+            router.push('/dashboard')
+            return
+          } else {
+            console.log('No session found after exchange, waiting for auth state...')
+          }
+        } else {
+          console.log('No authorization code found in URL')
         }
 
         // If we reach here, authentication was successful
         setIsProcessing(false)
+        console.log('Authentication successful, redirecting to dashboard...')
         
         // Wait a moment for the auth state to update
         setTimeout(() => {
@@ -70,6 +97,7 @@ function AuthCallbackContent() {
   // If user is already authenticated and not processing, redirect
   useEffect(() => {
     if (user && !loading && !isProcessing) {
+      console.log('User authenticated, redirecting to dashboard...')
       router.push('/dashboard')
     }
   }, [user, loading, isProcessing, router])
