@@ -67,13 +67,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithProvider = async (provider: Provider) => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+    console.log('=== OAuth Debug Info ===');
+    console.log('Provider:', provider);
+    console.log('Provider type:', typeof provider);
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('Supabase Anon Key length:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length);
+    console.log('Current origin:', window.location.origin);
+    
+    // Check if this is LinkedIn OIDC
+    if (provider === 'linkedin') {
+      console.log('Using LinkedIn OIDC provider');
+    }
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+      
+      console.log('OAuth response data:', data);
+      
+      if (error) {
+        console.error('OAuth error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+          stack: error.stack
+        });
+        throw error;
       }
-    })
-    if (error) throw error
+      
+      console.log('OAuth initiated successfully');
+    } catch (error) {
+      console.error('OAuth exception:', error);
+      throw error;
+    }
   }
 
   const signOut = async () => {
