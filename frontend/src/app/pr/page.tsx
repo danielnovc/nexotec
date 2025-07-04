@@ -141,7 +141,6 @@ export default function PortugueseLandingPage() {
         isDark={isDark} 
         toggleTheme={toggleTheme} 
         scrollY={scrollY} 
-        currentLang="pr"
       />
 
       {/* Hero Section */}

@@ -105,13 +105,18 @@ const nextConfig: NextConfig = {
 
   // Enable experimental features for better performance
   experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+    // Experimental features moved to stable config
+  },
+
+  // Server external packages configuration
+  serverExternalPackages: ['@supabase/supabase-js'],
+
+  // Turbopack configuration (moved from experimental)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
