@@ -291,9 +291,9 @@ export default function TermsOfServicePage() {
             <div>
               <h4 className="font-semibold mb-2">Contact Information</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Legal inquiries: legal@nexogen.ai</li>
-                <li>• Dispute resolution: disputes@nexogen.ai</li>
-                <li>• General support: support@nexogen.ai</li>
+                <li>• Legal inquiries: support@nexogen.app</li>
+                <li>• Dispute resolution: support@nexogen.app</li>
+                <li>• General support: support@nexogen.app</li>
               </ul>
             </div>
             <div>
@@ -330,11 +330,11 @@ export default function TermsOfServicePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 className="font-semibold">Legal Department</h4>
-                <p className="text-sm text-muted-foreground">legal@nexogen.ai</p>
+                <p className="text-sm text-muted-foreground">support@nexogen.app</p>
               </div>
               <div>
                 <h4 className="font-semibold">Customer Support</h4>
-                <p className="text-sm text-muted-foreground">support@nexogen.ai</p>
+                <p className="text-sm text-muted-foreground">support@nexogen.app</p>
               </div>
             </div>
           </div>

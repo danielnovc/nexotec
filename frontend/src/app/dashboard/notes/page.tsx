@@ -24,6 +24,9 @@ import {
 import { useAuth } from "@/contexts/AuthContext"
 import { useCredits } from "@/hooks/useCredits"
 import { toast } from "sonner"
+import { TwoFactorAuthModal } from "@/components/two-factor-auth-modal"
+import { is2FAEnabled } from "@/lib/2fa-api"
+import { useI18n } from "@/lib/i18n"
 
 interface Note {
   id: string
@@ -44,20 +47,38 @@ export default function NotesPage() {
   const [error, setError] = useState<string | null>(null)
   const [encryptionKey, setEncryptionKey] = useState("")
   const [expandedNote, setExpandedNote] = useState<string | null>(null)
+  const [show2FA, setShow2FA] = useState(false)
+  const [is2FAVerified, setIs2FAVerified] = useState(false)
+  const [verificationSuccessful, setVerificationSuccessful] = useState(false)
+  const { t } = useI18n()
 
   useEffect(() => {
-    // Get encryption key from session storage
-    const storedKey = sessionStorage.getItem('encryption_key')
+    // Get encryption key from localStorage (same as settings page)
+    const storedKey = localStorage.getItem('encryptionKey')
     if (storedKey) {
       setEncryptionKey(storedKey)
+    } else {
+      // Generate a new key if none exists
+      const { generateEncryptionKey } = require('@/lib/encryption')
+      const newKey = generateEncryptionKey()
+      localStorage.setItem('encryptionKey', newKey)
+      setEncryptionKey(newKey)
     }
   }, [])
 
   useEffect(() => {
-    if (user) {
-      loadNotes()
+    const check2FAAndLoad = async () => {
+      if (user) {
+        if (!is2FAVerified) {
+          setShow2FA(true)
+        } else {
+          loadNotes()
+        }
+      }
     }
-  }, [user, encryptionKey])
+    
+    check2FAAndLoad()
+  }, [user, encryptionKey, is2FAVerified])
 
   const loadNotes = async () => {
     if (!user) return
@@ -80,7 +101,7 @@ export default function NotesPage() {
       })
 
       if (!response.ok) {
-        throw new Error(`Failed to load notes: ${response.status}`)
+        throw new Error(`${t('failedToLoadNotes')}: ${response.status}`)
       }
 
       const data = await response.json()
@@ -90,8 +111,8 @@ export default function NotesPage() {
       setNotes(data.notes || [])
     } catch (err) {
       console.error('Error loading notes:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load notes')
-      toast.error('Failed to load notes')
+      setError(err instanceof Error ? err.message : t('failedToLoadNotes'))
+      toast.error(t('failedToLoadNotes'))
     } finally {
       setLoading(false)
     }
@@ -539,6 +560,28 @@ export default function NotesPage() {
           <p className="mt-1">Total notes: {notes.length}</p>
         </div>
       </div>
+
+      {/* 2FA Modal */}
+              <TwoFactorAuthModal
+          isOpen={show2FA}
+          onClose={() => {
+            setShow2FA(false)
+            // Only redirect if verification was not successful
+            if (!verificationSuccessful) {
+              window.location.href = '/dashboard'
+            }
+          }}
+          onSuccess={() => {
+            setIs2FAVerified(true)
+            setVerificationSuccessful(true)
+            setShow2FA(false)
+            // Load notes after successful verification
+            loadNotes()
+          }}
+          title={t('2fa.required')}
+          description={t('2fa.enterCodeToAccessNotes')}
+          encryptionKey={encryptionKey}
+        />
     </div>
   )
 } 

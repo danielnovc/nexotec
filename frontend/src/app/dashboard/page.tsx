@@ -34,6 +34,8 @@ import {
 import { saveEncryptedTranscription, saveEncryptedNote } from "@/lib/supabase"
 import { useDashboard } from "./layout"
 import { CreditTopUpModal } from "@/components/credit-topup-modal"
+import { useI18n } from "@/lib/i18n"
+import { TwoFAReminder } from "@/components/2fa-reminder"
 
 interface Transcription {
   id: string;
@@ -89,6 +91,7 @@ const SPEAKER_COLORS = [
 export default function DashboardPage() {
   const { user } = useAuth()
   const { takeNotes, recordDeviceAudio, refreshCredits } = useDashboard()
+  const { t } = useI18n()
   const { 
     credits, 
     loading: creditsLoading, 
@@ -1195,8 +1198,6 @@ export default function DashboardPage() {
     navigator.clipboard.writeText(text);
   };
 
-
-
   // Map speakers to consistent color and alignment
   const speakerOrder: string[] = Array.from(
     new Set(transcription.map((item) => item.speaker || 'Unknown'))
@@ -1211,14 +1212,14 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-1 h-[100dvh] bg-[#f5faff] dark:bg-neutral-900">
-      <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-32 lg:pb-8 flex flex-col gap-4 lg:gap-8">
-        
+      <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-32 lg:pb-8 flex flex-col gap-4 lg:gap-8 pt-2 lg:pt-4">
+        <TwoFAReminder />
         {/* Recording Controls - Hidden on mobile */}
         <Card className="hidden lg:block shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg lg:text-xl">Audio Recording</CardTitle>
+            <CardTitle className="text-lg lg:text-xl">{t('audioRecording')}</CardTitle>
             <CardDescription className="text-sm">
-              Record audio for transcription
+              {t('recordAudioForTranscription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1237,12 +1238,12 @@ export default function DashboardPage() {
                 {isRecording ? (
                   <>
                     <Square className="mr-2 h-4 w-4 animate-pulse" />
-                    Stop Recording
+                    {t('stopRecording')}
                   </>
                 ) : (
                   <>
                     <Mic className="mr-2 h-4 w-4" />
-                    Start Recording
+                    {t('startRecording')}
                   </>
                 )}
               </Button>
@@ -1251,11 +1252,11 @@ export default function DashboardPage() {
               {isRecording && (
                 <div className="flex items-center gap-2 w-full lg:w-auto lg:ml-2 animate-fade-in">
                   <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                  <span className="font-mono text-sm text-red-700">Recording in progress</span>
+                  <span className="font-mono text-sm text-red-700">{t('recordingInProgress')}</span>
                   {recordDeviceAudio && (
                     <span className="font-mono text-xs bg-blue-100 text-blue-700 rounded px-2 py-0.5 border border-blue-300">
                       <Monitor className="w-3 h-3 inline mr-1" />
-                      Device Audio
+                      {t('deviceAudio')}
                     </span>
                   )}
                   <span className="font-mono text-xs bg-gray-100 rounded px-2 py-0.5 ml-2 border border-gray-300">
@@ -1270,12 +1271,12 @@ export default function DashboardPage() {
               >
                 <SelectTrigger className="w-full lg:w-[240px] bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 font-semibold shadow-md border-none h-12 lg:h-10">
                   <Mic className="mr-2 h-4 w-4" />
-                  <span>Microphone</span>
+                  <span>{t('microphone')}</span>
                 </SelectTrigger>
                 <SelectContent className="w-full lg:w-[240px] bg-white dark:bg-neutral-900">
                   {availableMicrophones.map((mic) => (
                     <SelectItem key={mic.deviceId} value={mic.deviceId}>
-                      {mic.label || `Microphone ${mic.deviceId.slice(0, 4)}`}
+                      {mic.label || t('microphone') + ' ' + mic.deviceId.slice(0, 4)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1289,7 +1290,7 @@ export default function DashboardPage() {
                   onClick={clearTranscription}
                   disabled={transcription.length === 0}
                 >
-                  Clear
+                  {t('clear')}
                 </Button>
                 <Button
                   className="bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:scale-95 transition-all duration-150 font-semibold shadow-md h-12 lg:h-10 flex-1 lg:flex-none"
@@ -1301,12 +1302,12 @@ export default function DashboardPage() {
                   {isGeneratingSummary ? (
                     <>
                       <Loader size="sm" color="currentColor" className="mr-2" />
-                      Generating...
+                      {t('generating')}
                     </>
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Generate Summary
+                      {t('generateSummary')}
                     </>
                   )}
                 </Button>
@@ -1320,12 +1321,12 @@ export default function DashboardPage() {
                   {isGeneratingPDF ? (
                     <>
                       <Loader size="sm" color="currentColor" className="mr-2" />
-                      Generating...
+                      {t('generating')}
                     </>
                   ) : (
                     <>
                       <FileText className="mr-2 h-4 w-4" />
-                      Download PDF
+                      {t('downloadPDF')}
                     </>
                   )}
                 </Button>
@@ -1346,7 +1347,7 @@ export default function DashboardPage() {
                   transition={{ duration: 0.3 }}
                 >
                   <CardTitle className="flex items-center gap-2 text-lg lg:text-xl">
-                    {takeNotes ? "Notes" : "Transcription"}
+                    {takeNotes ? t('notes') : t('transcription')}
                     <Shield className="h-4 w-4 text-green-600" />
                   </CardTitle>
                 </motion.div>
@@ -1360,10 +1361,10 @@ export default function DashboardPage() {
                     {isRecording ? (
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        Recording in progress...
+                        {t('recordingInProgress')}
                       </div>
                     ) : (
-                      takeNotes ? "Notes will appear here" : "Transcription will appear here"
+                      takeNotes ? t('notesWillAppearHere') : t('transcriptionWillAppearHere')
                     )}
                   </CardDescription>
                 </motion.div>
@@ -1376,7 +1377,7 @@ export default function DashboardPage() {
                 className="border-black text-black dark:border-white dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95 transition-all duration-150 w-full sm:w-auto h-10"
               >
                 <Copy className="mr-2 h-4 w-4" />
-                Copy
+                {t('copy')}
               </Button>
             </div>
           </CardHeader>
@@ -1394,7 +1395,7 @@ export default function DashboardPage() {
                   >
                     <div className="flex flex-col items-center gap-6">
                       <Loader size="lg" color="currentColor" className="w-16 h-16 lg:w-24 lg:h-24" />
-                      <span className="text-base lg:text-lg font-medium text-muted-foreground text-center">Processing audio...</span>
+                      <span className="text-base lg:text-lg font-medium text-muted-foreground text-center">{t('processingAudio')}</span>
                     </div>
                   </motion.div>
                 ) : takeNotes ? (
@@ -1430,12 +1431,12 @@ export default function DashboardPage() {
                       </motion.div>
                     ) : (
                       <motion.div 
-                        className="text-muted-foreground text-sm"
+                        className="text-muted-foreground text-sm pt-2"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}
                       >
-                        No notes generated yet.
+                        {t('noNotesGeneratedYet')}
                       </motion.div>
                     )}
                   </motion.div>
@@ -1452,7 +1453,7 @@ export default function DashboardPage() {
                       transcription.map((item, index) => {
                         const speaker = item.speaker || 'Unknown';
                         const speakerNumber = speaker.replace(/[^0-9]/g, '');
-                        const displaySpeaker = speakerNumber ? `Speaker ${parseInt(speakerNumber) + 1}` : speaker;
+                        const displaySpeaker = speakerNumber ? t('speaker') + ' ' + (parseInt(speakerNumber) + 1) : speaker;
                         const { color, align } = speakerMap[speaker] || { color: 'bg-gray-400', align: 'left' };
                         return (
                           <motion.div
@@ -1487,12 +1488,12 @@ export default function DashboardPage() {
                       })
                     ) : (
                       <motion.div 
-                        className="text-muted-foreground text-sm"
+                        className="text-muted-foreground text-sm pt-2"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}
                       >
-                        No transcription generated yet.
+                        {t('noTranscriptionGeneratedYet')}
                       </motion.div>
                     )}
                   </motion.div>
@@ -1505,7 +1506,7 @@ export default function DashboardPage() {
         {/* Summary Section always under Transcription */}
         <Card className="shadow-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-950">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg lg:text-xl">Summary</CardTitle>
+            <CardTitle className="text-lg lg:text-xl">{t('summary')}</CardTitle>
           </CardHeader>
           <CardContent>
             {summary ? (
@@ -1515,7 +1516,7 @@ export default function DashboardPage() {
                 className="min-h-[100px] bg-gray-50 dark:bg-neutral-900 text-sm"
               />
             ) : (
-              <div className="text-muted-foreground text-sm">No summary generated yet.</div>
+              <div className="text-muted-foreground text-sm pt-2">{t('noSummaryGeneratedYet')}</div>
             )}
           </CardContent>
         </Card>
@@ -1527,11 +1528,11 @@ export default function DashboardPage() {
         {isRecording && (
           <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-red-50 dark:bg-red-950 rounded-lg">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="font-mono text-sm text-red-700 dark:text-red-300">Recording</span>
+            <span className="font-mono text-sm text-red-700 dark:text-red-300">{t('recording')}</span>
             {recordDeviceAudio && (
               <span className="font-mono text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded px-2 py-1 border border-blue-200 dark:border-blue-800">
                 <Monitor className="w-3 h-3 inline mr-1" />
-                Device Audio
+                {t('deviceAudio')}
               </span>
             )}
             <span className="font-mono text-xs bg-red-100 dark:bg-red-900 rounded px-2 py-1 border border-red-200 dark:border-red-800">
@@ -1559,7 +1560,7 @@ export default function DashboardPage() {
               )}
             </button>
             <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">
-              {isRecording ? 'Stop' : 'Record'}
+              {isRecording ? t('stop') : t('record')}
             </span>
           </div>
 
@@ -1572,7 +1573,7 @@ export default function DashboardPage() {
             >
               <RotateCcw className="h-6 w-6 text-gray-900 dark:text-gray-100" />
             </button>
-            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">Clear</span>
+            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">{t('clear')}</span>
           </div>
 
           {/* Generate Summary Button */}
@@ -1588,7 +1589,7 @@ export default function DashboardPage() {
                 <Sparkles className="h-6 w-6 text-gray-900 dark:text-gray-100" />
               )}
             </button>
-            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">Summary</span>
+            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">{t('summary')}</span>
           </div>
 
           {/* Download PDF Button */}
@@ -1604,7 +1605,7 @@ export default function DashboardPage() {
                 <FileText className="h-6 w-6 text-gray-900 dark:text-gray-100" />
               )}
             </button>
-            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">PDF</span>
+            <span className="text-xs mt-1 text-gray-900 dark:text-gray-100">{t('pdf')}</span>
           </div>
         </div>
       </div>

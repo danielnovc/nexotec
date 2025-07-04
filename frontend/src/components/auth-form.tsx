@@ -92,7 +92,7 @@ export function AuthForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome to Transcrib</CardTitle>
+          <CardTitle className="text-xl">Welcome to Nexogen AI</CardTitle>
           <CardDescription>
             Login or create an account to get started
           </CardDescription>

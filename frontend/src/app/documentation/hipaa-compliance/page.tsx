@@ -428,7 +428,7 @@ export default function HIPAACompliancePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 className="font-semibold">HIPAA Compliance Officer</h4>
-                <p className="text-sm text-muted-foreground">hipaa@nexogen.ai</p>
+                <p className="text-sm text-muted-foreground">support@nexogen.app</p>
               </div>
               <div>
                 <h4 className="font-semibold">Legal Department</h4>
@@ -438,7 +438,7 @@ export default function HIPAACompliancePage() {
             <div>
               <h4 className="font-semibold mb-2">Emergency Contact</h4>
               <p className="text-sm text-muted-foreground">
-                For security incidents and breach notifications: security@nexogen.ai
+                For security incidents and breach notifications: support@nexogen.app
               </p>
             </div>
           </div>

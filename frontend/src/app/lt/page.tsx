@@ -130,7 +130,7 @@ export default function LithuanianLandingPage() {
       {/* Structured Data for SEO */}
       <StructuredData
         lang="lt-LT"
-        title="Transcrib - Saugi AI Transkripcija Profesionalams"
+        title="Nexogen AI - Saugi AI Transkripcija Profesionalams"
         description="Profesionali garso transkripcija su balso atpažinimu ir saugios pastabos"
         url="https://nexogen.app/lt"
         region="LT"
@@ -141,7 +141,7 @@ export default function LithuanianLandingPage() {
         isDark={isDark} 
         toggleTheme={toggleTheme} 
         scrollY={scrollY} 
-        currentLang="lt"
+
       />
 
       {/* Hero Section */}

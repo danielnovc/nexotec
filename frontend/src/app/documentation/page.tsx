@@ -163,11 +163,11 @@ export default function DocumentationPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h4 className="font-semibold">Support</h4>
-              <p className="text-sm text-muted-foreground">support@nexogen.ai</p>
+              <p className="text-sm text-muted-foreground">support@nexogen.app</p>
             </div>
             <div>
               <h4 className="font-semibold">Legal</h4>
-              <p className="text-sm text-muted-foreground">legal@nexogen.ai</p>
+              <p className="text-sm text-muted-foreground">support@nexogen.app</p>
             </div>
           </div>
         </CardContent>

@@ -1,0 +1,1 @@
+                <p><strong>Endpoint:</strong> [Your Supabase Storage Endpoint]</p> 

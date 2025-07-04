@@ -130,7 +130,7 @@ export default function GermanLandingPage() {
       {/* Structured Data for SEO */}
       <StructuredData
         lang="de-DE"
-        title="Transcrib - Sichere KI-Transkription für Profis"
+        title="Nexogen AI - Sichere KI-Transkription für Profis"
         description="Professionelle Audiotranskription mit Spracherkennung und sichere Notizen für Fachkräfte"
         url="https://nexogen.app/de"
         region="DE"
@@ -141,7 +141,6 @@ export default function GermanLandingPage() {
         isDark={isDark} 
         toggleTheme={toggleTheme} 
         scrollY={scrollY} 
-        currentLang="de"
       />
 
       {/* Hero Section */}

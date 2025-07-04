@@ -130,7 +130,7 @@ export default function UkrainianLandingPage() {
       {/* Structured Data for SEO */}
       <StructuredData
         lang="uk-UA"
-        title="Transcrib - Безпечна Транскрипція ШІ для Професіоналів"
+        title="Nexogen AI - Безпечна Транскрипція ШІ для Професіоналів"
         description="Професійна транскрипція аудіо з розпізнаванням мови та безпечні нотатки"
         url="https://nexogen.app/ua"
         region="UA"
@@ -141,7 +141,7 @@ export default function UkrainianLandingPage() {
         isDark={isDark} 
         toggleTheme={toggleTheme} 
         scrollY={scrollY} 
-        currentLang="ua"
+
       />
 
       {/* Hero Section */}

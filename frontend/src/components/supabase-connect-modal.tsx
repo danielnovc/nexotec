@@ -170,8 +170,8 @@ export function SupabaseConnectModal({ open, onClose, onS3ConfigSave }: Supabase
                 </div>
 
                 <div className="mb-6 p-4 rounded-xl bg-muted text-sm">
-                  <p><strong>Endpoint:</strong> https://npdsnsgxyhurwoyfrege.supabase.co/storage/v1/s3</p>
-                  <p><strong>Region:</strong> eu-north-1</p>
+                  <p><strong>Endpoint:</strong> [Your Supabase Storage Endpoint]</p>
+                  <p><strong>Region:</strong> [Your Supabase Region]</p>
                 </div>
 
                 <div className="flex gap-2">

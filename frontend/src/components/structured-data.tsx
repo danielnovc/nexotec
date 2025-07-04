@@ -12,7 +12,7 @@ export default function StructuredData({ lang, title, description, url, region }
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Transcrib",
+    "name": "Nexogen AI",
     "description": description,
     "url": url,
     "applicationCategory": "BusinessApplication",
@@ -43,7 +43,7 @@ export default function StructuredData({ lang, title, description, url, region }
       "End-to-end encryption",
       "100+ languages supported"
     ],
-    "screenshot": "https://transcrib.nexogen.com/screenshot.png",
+    "screenshot": "https://nexogen.com/screenshot.png",
     "softwareVersion": "1.0.0",
     "datePublished": "2024-01-01",
     "dateModified": new Date().toISOString().split('T')[0]

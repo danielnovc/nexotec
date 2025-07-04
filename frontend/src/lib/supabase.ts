@@ -28,6 +28,16 @@ export interface User {
   email: string
   credits: number
   encryption_key_hash?: string
+  two_factor_enabled?: boolean
+  two_factor_secret_encrypted?: string
+  two_factor_secret_iv?: string
+  two_factor_secret_salt?: string
+  two_factor_backup_codes_encrypted?: string
+  two_factor_backup_codes_iv?: string
+  two_factor_backup_codes_salt?: string
+  onboarding_completed?: boolean
+  onboarding_data?: any
+  show_2fa_reminder?: boolean
   created_at: string
   updated_at: string
 }

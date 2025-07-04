@@ -131,7 +131,6 @@ export default function StreamLineLanding() {
         isDark={isDark} 
         toggleTheme={toggleTheme} 
         scrollY={scrollY} 
-        currentLang="en"
       />
 
       {/* Hero Section */}

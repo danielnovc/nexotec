@@ -130,7 +130,7 @@ export default function RussianLandingPage() {
       {/* Structured Data for SEO */}
       <StructuredData
         lang="ru-RU"
-        title="Transcrib - Безопасная Транскрипция ИИ для Профессионалов"
+        title="Nexogen AI - Безопасная Транскрипция ИИ для Профессионалов"
         description="Профессиональная транскрипция аудио с распознаванием речи и безопасные заметки"
         url="https://nexogen.app/ru"
         region="RU"
@@ -141,7 +141,7 @@ export default function RussianLandingPage() {
         isDark={isDark} 
         toggleTheme={toggleTheme} 
         scrollY={scrollY} 
-        currentLang="ru"
+
       />
 
       {/* Hero Section */}

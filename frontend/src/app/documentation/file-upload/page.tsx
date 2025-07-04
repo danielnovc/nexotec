@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, FileText, AudioLines, Video, Clock, Download, Shield, Zap, Users, Database } from "lucide-react"
+import { Upload, FileText, AudioLines, Video, Clock, Download, Shield, Zap, Users, Database, AlertCircle } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 export default function FileUploadPage() {
   return (
@@ -12,16 +13,39 @@ export default function FileUploadPage() {
         <p className="text-muted-foreground mb-6">
           Last updated: {new Date().toLocaleDateString()}
         </p>
-        <p className="text-muted-foreground mb-6">
-          Nexogen AI's file upload feature allows you to upload audio and video files for transcription. Support multiple formats, batch processing, and secure cloud storage with advanced speaker diarization and language detection.
-        </p>
+        <div className="flex items-center gap-2 mb-6">
+          <Badge variant="secondary">Coming Soon</Badge>
+          <p className="text-muted-foreground">
+            File upload functionality is currently in development. For now, please use our live recording feature for transcription.
+          </p>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            Current Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            Our file upload feature is currently being developed and will be available soon. This will allow you to upload existing audio and video files for transcription.
+          </p>
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Use Live Recording Instead</h4>
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              While file upload is being developed, you can use our live recording feature which provides the same high-quality transcription with speaker diarization and timestamps.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Supported File Formats
+            Planned Features
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -62,7 +86,7 @@ export default function FileUploadPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
-            Upload Process
+            Planned Upload Process
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -73,7 +97,7 @@ export default function FileUploadPage() {
               </div>
               <div>
                 <h4 className="font-semibold">Select Files</h4>
-                <p className="text-sm text-muted-foreground">Drag and drop files or click to browse. You can upload multiple files at once for batch processing.</p>
+                <p className="text-sm text-muted-foreground">Drag and drop files or click to browse. You'll be able to upload multiple files at once for batch processing.</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -91,7 +115,7 @@ export default function FileUploadPage() {
               </div>
               <div>
                 <h4 className="font-semibold">Upload & Process</h4>
-                <p className="text-sm text-muted-foreground">Files are securely uploaded and processed using our AI transcription engine.</p>
+                <p className="text-sm text-muted-foreground">Files will be securely uploaded and processed using our AI transcription engine.</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -111,7 +135,7 @@ export default function FileUploadPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Advanced Features
+            Planned Features
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -168,7 +192,7 @@ export default function FileUploadPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>File Size & Duration Limits</CardTitle>
+          <CardTitle>Planned File Size & Duration Limits</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -202,155 +226,18 @@ export default function FileUploadPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Processing Options</CardTitle>
+          <CardTitle>Stay Updated</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            <div>
-              <h4 className="font-semibold mb-3">Language Settings</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h5 className="font-semibold mb-2">Automatic Detection</h5>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• AI-powered language detection</li>
-                    <li>• Supports 50+ languages</li>
-                    <li>• Handles mixed-language content</li>
-                    <li>• Dialect recognition</li>
-                  </ul>
-                </div>
-                <div>
-                  <h5 className="font-semibold mb-2">Manual Selection</h5>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Choose specific language</li>
-                    <li>• Improved accuracy for known languages</li>
-                    <li>• Faster processing time</li>
-                    <li>• Better handling of accents</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">Speaker Settings</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h5 className="font-semibold mb-2">Speaker Diarization</h5>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Automatic speaker identification</li>
-                    <li>• Up to 10 speakers per file</li>
-                    <li>• Speaker labels (Speaker 1, Speaker 2, etc.)</li>
-                    <li>• Custom speaker naming</li>
-                  </ul>
-                </div>
-                <div>
-                  <h5 className="font-semibold mb-2">Single Speaker</h5>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Optimized for monologue content</li>
-                    <li>• Faster processing</li>
-                    <li>• Lower cost per minute</li>
-                    <li>• Ideal for podcasts and lectures</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">Output Formats</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h5 className="font-semibold mb-2">Text Formats</h5>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Plain text (.txt)</li>
-                    <li>• Rich text with timestamps</li>
-                    <li>• JSON with metadata</li>
-                    <li>• CSV for data analysis</li>
-                  </ul>
-                </div>
-                <div>
-                  <h5 className="font-semibold mb-2">Subtitle Formats</h5>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• SRT (SubRip)</li>
-                    <li>• VTT (WebVTT)</li>
-                    <li>• ASS/SSA subtitles</li>
-                    <li>• Custom timestamp formats</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Security & Privacy</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 mt-1" />
-              <div>
-                <h4 className="font-semibold">End-to-End Encryption</h4>
-                <p className="text-sm text-muted-foreground">All files are encrypted during upload, processing, and storage to ensure maximum security.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Database className="h-5 w-5 mt-1" />
-              <div>
-                <h4 className="font-semibold">Secure Storage</h4>
-                <p className="text-sm text-muted-foreground">Files are stored in secure, EU-based data centers with redundant backups and disaster recovery.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Clock className="h-5 w-5 mt-1" />
-              <div>
-                <h4 className="font-semibold">Automatic Deletion</h4>
-                <p className="text-sm text-muted-foreground">Files are automatically deleted after processing unless you choose to save them permanently.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Users className="h-5 w-5 mt-1" />
-              <div>
-                <h4 className="font-semibold">Access Control</h4>
-                <p className="text-sm text-muted-foreground">Only you have access to your files and transcriptions. No third-party access is permitted.</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Tips for Best Results</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-semibold mb-2">File Preparation</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Use high-quality audio files (16-bit, 44.1kHz or higher)</li>
-                <li>• Ensure clear audio with minimal background noise</li>
-                <li>• Avoid heavily compressed formats for better accuracy</li>
-                <li>• Split very long files into smaller segments if needed</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Processing Optimization</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Choose the correct language for better accuracy</li>
-                <li>• Enable speaker diarization for multi-speaker content</li>
-                <li>• Use batch upload for multiple files to save time</li>
-                <li>• Check processing status regularly for large files</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Output Management</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Download results promptly to avoid expiration</li>
-                <li>• Use appropriate export formats for your needs</li>
-                <li>• Review and edit transcriptions for accuracy</li>
-                <li>• Save important files to cloud storage for backup</li>
-              </ul>
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            We'll notify you when file upload functionality becomes available. In the meantime, you can:
+          </p>
+          <ul className="text-sm text-muted-foreground space-y-1">
+            <li>• Use our live recording feature for immediate transcription needs</li>
+            <li>• Check our documentation for updates</li>
+            <li>• Contact support for any questions about upcoming features</li>
+            <li>• Follow our development progress</li>
+          </ul>
         </CardContent>
       </Card>
     </div>

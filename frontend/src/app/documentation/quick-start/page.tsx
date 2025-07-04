@@ -211,7 +211,7 @@ export default function QuickStartPage() {
               <h4 className="font-semibold mb-2">Get Help</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Check our <a href="/documentation#faq" className="underline">FAQ section</a> for common questions</li>
-                <li>• Contact support at support@nexogen.ai</li>
+                <li>• Contact support at support@nexogen.app</li>
                 <li>• Join our community for tips and best practices</li>
               </ul>
             </div>

@@ -212,13 +212,13 @@ export default function DocumentationDashboard() {
 
   const documentationContent = {
     "introduction": {
-      title: "Welcome to Transcrib",
+      title: "Welcome to Nexogen AI",
       content: (
         <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-bold mb-4">Welcome to Transcrib</h2>
+            <h2 className="text-2xl font-bold mb-4">Welcome to Nexogen AI</h2>
             <p className="text-muted-foreground mb-6">
-              Transcrib is a professional AI-powered transcription service that converts audio to text with speaker diarization, 
+              Nexogen AI is a professional AI-powered transcription service that converts audio to text with speaker diarization, 
               advanced processing, and advanced features for note-taking and analysis.
             </p>
           </div>
@@ -442,7 +442,7 @@ export default function DocumentationDashboard() {
               Last updated: {new Date().toLocaleDateString()}
             </p>
             <p className="text-muted-foreground mb-6">
-              Transcrib is fully compliant with the General Data Protection Regulation (GDPR), ensuring the highest standards of data protection and privacy for EU residents. This document outlines our comprehensive approach to GDPR compliance.
+              Nexogen AI is fully compliant with the General Data Protection Regulation (GDPR), ensuring the highest standards of data protection and privacy for EU residents. This document outlines our comprehensive approach to GDPR compliance.
             </p>
           </div>
 
@@ -455,7 +455,7 @@ export default function DocumentationDashboard() {
                 <div>
                   <h4 className="font-semibold mb-2">EU-Based Infrastructure</h4>
                   <p className="text-sm text-muted-foreground">
-                    All Transcrib services are hosted on EU-based infrastructure to ensure data sovereignty and compliance with GDPR requirements. Our data centers are located within the European Union, providing guaranteed data residency and protection under EU law.
+                    All Nexogen AI services are hosted on EU-based infrastructure to ensure data sovereignty and compliance with GDPR requirements. Our data centers are located within the European Union, providing guaranteed data residency and protection under EU law.
                   </p>
                   <ul className="text-sm text-muted-foreground space-y-1 mt-2">
                     <li>• All servers located within EU member states</li>
@@ -732,7 +732,7 @@ export default function DocumentationDashboard() {
                         <li>• Dedicated DPO for compliance oversight</li>
                         <li>• Independent reporting structure</li>
                         <li>• Regular compliance assessments</li>
-                        <li>• Contact: dpo@transcrib.com</li>
+                        <li>• Contact: dpo@nexogen.com</li>
                       </ul>
                     </div>
                     <div className="space-y-3">
@@ -822,11 +822,11 @@ export default function DocumentationDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-semibold">Data Protection Officer</h4>
-                    <p className="text-sm text-muted-foreground">dpo@transcrib.com</p>
+                    <p className="text-sm text-muted-foreground">dpo@nexogen.com</p>
                   </div>
                   <div>
                     <h4 className="font-semibold">Privacy Team</h4>
-                    <p className="text-sm text-muted-foreground">privacy@transcrib.com</p>
+                    <p className="text-sm text-muted-foreground">privacy@nexogen.com</p>
                   </div>
                 </div>
                 <div>
@@ -851,7 +851,7 @@ export default function DocumentationDashboard() {
               Last updated: {new Date().toLocaleDateString()}
             </p>
             <p className="text-muted-foreground mb-6">
-              Transcrib meets all requirements of the Health Insurance Portability and Accountability Act (HIPAA), ensuring secure handling of Protected Health Information (PHI) for healthcare professionals. Our EU-based infrastructure and advanced encryption provide additional security layers beyond HIPAA requirements.
+              Nexogen AI meets all requirements of the Health Insurance Portability and Accountability Act (HIPAA), ensuring secure handling of Protected Health Information (PHI) for healthcare professionals. Our EU-based infrastructure and advanced encryption provide additional security layers beyond HIPAA requirements.
             </p>
           </div>
 
@@ -937,7 +937,7 @@ export default function DocumentationDashboard() {
                 <div>
                   <h4 className="font-semibold mb-2">Our Role as a Business Associate</h4>
                   <p className="text-sm text-muted-foreground">
-                    Transcrib acts as a business associate when we provide transcription services to healthcare providers. We process, store, and transmit PHI on behalf of covered entities, making HIPAA compliance essential to our operations.
+                    Nexogen AI acts as a business associate when we provide transcription services to healthcare providers. We process, store, and transmit PHI on behalf of covered entities, making HIPAA compliance essential to our operations.
                   </p>
                 </div>
                 <div>
@@ -1147,17 +1147,17 @@ export default function DocumentationDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-semibold">HIPAA Compliance Officer</h4>
-                    <p className="text-sm text-muted-foreground">hipaa@transcrib.com</p>
+                    <p className="text-sm text-muted-foreground">hipaa@nexogen.com</p>
                   </div>
                   <div>
                     <h4 className="font-semibold">Legal Department</h4>
-                    <p className="text-sm text-muted-foreground">legal@transcrib.com</p>
+                    <p className="text-sm text-muted-foreground">legal@nexogen.com</p>
                   </div>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Emergency Contact</h4>
                   <p className="text-sm text-muted-foreground">
-                    For security incidents and breach notifications: security@transcrib.com
+                    For security incidents and breach notifications: security@nexogen.com
                   </p>
                 </div>
               </div>
@@ -1359,11 +1359,11 @@ export default function DocumentationDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-semibold">Email</h4>
-                    <p className="text-sm text-muted-foreground">privacy@transcrib.com</p>
+                    <p className="text-sm text-muted-foreground">privacy@nexogen.com</p>
                   </div>
                   <div>
                     <h4 className="font-semibold">Data Protection Officer</h4>
-                    <p className="text-sm text-muted-foreground">dpo@transcrib.com</p>
+                    <p className="text-sm text-muted-foreground">dpo@nexogen.com</p>
                   </div>
                 </div>
               </div>
@@ -1389,7 +1389,7 @@ export default function DocumentationDashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                By accessing or using Transcrib's services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
+                By accessing or using Nexogen AI's services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
               </p>
             </CardContent>
           </Card>
@@ -1401,7 +1401,7 @@ export default function DocumentationDashboard() {
             <CardContent>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Transcrib provides AI-powered audio transcription services, including:
+                  Nexogen AI provides AI-powered audio transcription services, including:
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-3">
@@ -1498,7 +1498,7 @@ export default function DocumentationDashboard() {
                 <div>
                   <h4 className="font-semibold mb-2">Our Services</h4>
                   <p className="text-sm text-muted-foreground">
-                    Transcrib's software, algorithms, and platform are protected by intellectual property laws. You may not copy, modify, or distribute our technology.
+                    Nexogen AI's software, algorithms, and platform are protected by intellectual property laws. You may not copy, modify, or distribute our technology.
                   </p>
                 </div>
               </div>
@@ -1512,7 +1512,7 @@ export default function DocumentationDashboard() {
             <CardContent>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Transcrib provides services "as is" without warranties. Our liability is limited to the amount paid for services in the 12 months preceding any claim.
+                  Nexogen AI provides services "as is" without warranties. Our liability is limited to the amount paid for services in the 12 months preceding any claim.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-3">
@@ -1578,11 +1578,11 @@ export default function DocumentationDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-semibold">Legal Department</h4>
-                    <p className="text-sm text-muted-foreground">legal@transcrib.com</p>
+                    <p className="text-sm text-muted-foreground">legal@nexogen.com</p>
                   </div>
                   <div>
                     <h4 className="font-semibold">Customer Support</h4>
-                    <p className="text-sm text-muted-foreground">support@transcrib.com</p>
+                    <p className="text-sm text-muted-foreground">support@nexogen.com</p>
                   </div>
                 </div>
               </div>
@@ -1615,7 +1615,7 @@ export default function DocumentationDashboard() {
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Data Processor</h4>
-                    <p className="text-sm text-muted-foreground">Transcrib, who processes personal data on behalf of the controller.</p>
+                    <p className="text-sm text-muted-foreground">Nexogen AI, who processes personal data on behalf of the controller.</p>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Personal Data</h4>
@@ -1815,7 +1815,7 @@ export default function DocumentationDashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                This Acceptable Use Policy outlines the rules and guidelines for using Transcrib's services. By using our services, you agree to comply with this policy.
+                This Acceptable Use Policy outlines the rules and guidelines for using Nexogen AI's services. By using our services, you agree to comply with this policy.
               </p>
             </CardContent>
           </Card>
@@ -1926,7 +1926,7 @@ export default function DocumentationDashboard() {
                 <div>
                   <h4 className="font-semibold mb-2">Reporting Violations</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Report violations to abuse@transcrib.com</li>
+                    <li>• Report violations to abuse@nexogen.com</li>
                     <li>• Provide specific details and evidence</li>
                     <li>• We investigate all reports promptly</li>
                     <li>• Confidentiality maintained for reporters</li>
@@ -1947,7 +1947,7 @@ export default function DocumentationDashboard() {
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2 mb-4">
-            <img src="/icon.png" alt="Transcrib" className="w-8 h-8" />
+            <img src="/icon.png" alt="Nexogen AI" className="w-8 h-8" />
             <h2 className="text-sidebar-foreground font-medium">Nexogen AI</h2>
           </div>
           <SearchForm />

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, Edit, Save, Download } from "lucide-react"
+import { FileText, Edit, Save, Download, RotateCcw } from "lucide-react"
 
 export default function FirstNotePage() {
   return (
@@ -13,7 +13,7 @@ export default function FirstNotePage() {
           Last updated: {new Date().toLocaleDateString()}
         </p>
         <p className="text-muted-foreground mb-6">
-          Note-taking mode is perfect for lectures, solo podcasts, and personal memos. Follow these steps to create your first note.
+          Notes mode is perfect for lectures, solo podcasts, and personal memos. Follow these steps to create your first note using our live recording feature.
         </p>
       </div>
 
@@ -28,8 +28,8 @@ export default function FirstNotePage() {
                 <span className="text-sm font-semibold">1</span>
               </div>
               <div>
-                <h4 className="font-semibold">Select Note-taking Mode</h4>
-                <p className="text-sm text-muted-foreground">On the dashboard, choose <b>Note-taking Mode</b> before you start recording or uploading your audio.</p>
+                <h4 className="font-semibold">Switch to Notes Mode</h4>
+                <p className="text-sm text-muted-foreground">Use the toggle in the sidebar to switch to <b>Notes Mode</b>. This mode is optimized for single-speaker content and provides a cleaner, note-like output.</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -37,8 +37,8 @@ export default function FirstNotePage() {
                 <span className="text-sm font-semibold">2</span>
               </div>
               <div>
-                <h4 className="font-semibold">Record or Upload Audio</h4>
-                <p className="text-sm text-muted-foreground">Click the microphone to record, or upload an audio file. Note-taking mode works best for single-speaker content.</p>
+                <h4 className="font-semibold">Select Your Microphone</h4>
+                <p className="text-sm text-muted-foreground">Choose from available audio devices in the microphone dropdown. Notes mode works best with clear, single-speaker audio.</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -46,8 +46,8 @@ export default function FirstNotePage() {
                 <span className="text-sm font-semibold">3</span>
               </div>
               <div>
-                <h4 className="font-semibold">Review and Edit</h4>
-                <p className="text-sm text-muted-foreground">Once processing is complete, review your note. You can edit the text directly in the editor for clarity or corrections.</p>
+                <h4 className="font-semibold">Start Recording</h4>
+                <p className="text-sm text-muted-foreground">Click the microphone button to begin recording. You'll see a recording timer and can monitor the duration in real-time.</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -55,9 +55,46 @@ export default function FirstNotePage() {
                 <span className="text-sm font-semibold">4</span>
               </div>
               <div>
-                <h4 className="font-semibold">Save or Export</h4>
-                <p className="text-sm text-muted-foreground">Save your note to the cloud, or export it as PDF, TXT, or copy to clipboard for use elsewhere.</p>
+                <h4 className="font-semibold">Stop & Process</h4>
+                <p className="text-sm text-muted-foreground">Click stop to end recording. Your audio is then processed to generate a clean, note-like transcription without speaker labels.</p>
               </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-sm font-semibold">5</span>
+              </div>
+              <div>
+                <h4 className="font-semibold">Review and Export</h4>
+                <p className="text-sm text-muted-foreground">Review your note, then export as PDF, copy to clipboard, or generate a summary. Notes mode provides a cleaner, more readable format.</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Notes Mode Benefits</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-3">Cost Efficiency</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Lower cost per minute than transcription mode</li>
+                <li>• Optimized for single-speaker content</li>
+                <li>• Faster processing time</li>
+                <li>• Ideal for budget-conscious users</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Output Quality</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Clean, note-like format</li>
+                <li>• No speaker labels to clutter the text</li>
+                <li>• Better for reading and editing</li>
+                <li>• Perfect for documentation</li>
+              </ul>
             </div>
           </div>
         </CardContent>
@@ -72,7 +109,9 @@ export default function FirstNotePage() {
             <li>• Use a good quality microphone for clear audio</li>
             <li>• Minimize background noise</li>
             <li>• Speak clearly and at a steady pace</li>
-            <li>• Edit your note for accuracy before saving or exporting</li>
+            <li>• Use notes mode for lectures, podcasts, and personal recordings</li>
+            <li>• Switch to transcription mode if you have multiple speakers</li>
+            <li>• Generate summaries for longer recordings to capture key points</li>
           </ul>
         </CardContent>
       </Card>

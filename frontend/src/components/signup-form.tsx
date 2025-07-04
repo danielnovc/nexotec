@@ -72,7 +72,7 @@ export function SignupForm({
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Create an account</h1>
                 <p className="text-muted-foreground text-balance">
-                  Join Transcrib and start transcribing your audio
+                  Join Nexogen AI and start transcribing your audio
                 </p>
               </div>
               <div className="grid gap-3">

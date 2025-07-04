@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Mic, MicOff, Download, Sparkles, Clock, FileText, Loader2, Play, Square, Copy, Sun, Moon, CreditCard, Shield, Database, Zap } from "lucide-react"
+import { Mic, MicOff, Download, Sparkles, Clock, FileText, Loader2, Play, Square, Copy, Sun, Moon, CreditCard, Shield, Database, Zap, Monitor, RotateCcw } from "lucide-react"
 
 export default function LiveRecordingPage() {
   return (
@@ -13,7 +13,7 @@ export default function LiveRecordingPage() {
           Last updated: {new Date().toLocaleDateString()}
         </p>
         <p className="text-muted-foreground mb-6">
-          Transcrib's live recording feature lets you record audio directly in your browser and get accurate transcriptions with speaker identification. Perfect for meetings, interviews, lectures, and any situation where you need professional transcription results.
+          Nexogen AI's live recording feature lets you record audio directly in your browser and get accurate transcriptions with speaker identification. Perfect for meetings, interviews, lectures, and any situation where you need professional transcription results.
         </p>
       </div>
 
@@ -31,8 +31,8 @@ export default function LiveRecordingPage() {
                 <span className="text-sm font-semibold">1</span>
               </div>
               <div>
-                <h4 className="font-semibold">Start Recording</h4>
-                <p className="text-sm text-muted-foreground">Click the microphone button to begin recording. Choose from available audio devices and ensure you have the right permissions.</p>
+                <h4 className="font-semibold">Choose Your Mode</h4>
+                <p className="text-sm text-muted-foreground">Use the toggle in the sidebar to switch between <b>Transcription Mode</b> (with speaker diarization) and <b>Notes Mode</b> (simplified for single speakers).</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -40,13 +40,22 @@ export default function LiveRecordingPage() {
                 <span className="text-sm font-semibold">2</span>
               </div>
               <div>
-                <h4 className="font-semibold">Record Your Audio</h4>
-                <p className="text-sm text-muted-foreground">Speak clearly into your microphone while the system captures high-quality audio. You can see the recording duration and audio levels during recording.</p>
+                <h4 className="font-semibold">Select Your Microphone</h4>
+                <p className="text-sm text-muted-foreground">Choose from available audio devices in the microphone dropdown. You can also enable device audio recording to capture system sounds.</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                 <span className="text-sm font-semibold">3</span>
+              </div>
+              <div>
+                <h4 className="font-semibold">Start Recording</h4>
+                <p className="text-sm text-muted-foreground">Click the microphone button to begin recording. You'll see a recording timer and can monitor the duration in real-time.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-sm font-semibold">4</span>
               </div>
               <div>
                 <h4 className="font-semibold">Stop & Process</h4>
@@ -55,11 +64,11 @@ export default function LiveRecordingPage() {
             </div>
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                <span className="text-sm font-semibold">4</span>
+                <span className="text-sm font-semibold">5</span>
               </div>
               <div>
                 <h4 className="font-semibold">Get Your Results</h4>
-                <p className="text-sm text-muted-foreground">Download transcriptions as PDF, copy text, or save to cloud storage. You can also generate summaries and export in various formats.</p>
+                <p className="text-sm text-muted-foreground">Download transcriptions as PDF, copy text, or generate summaries. You can also save to cloud storage if enabled.</p>
               </div>
             </div>
           </div>
@@ -81,6 +90,13 @@ export default function LiveRecordingPage() {
                 <div>
                   <h4 className="font-semibold">Multi-Microphone Support</h4>
                   <p className="text-sm text-muted-foreground">Choose from available audio devices and switch between microphones during your session</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Monitor className="h-5 w-5 mt-1" />
+                <div>
+                  <h4 className="font-semibold">Device Audio Recording</h4>
+                  <p className="text-sm text-muted-foreground">Capture system audio in addition to microphone input for complete audio capture</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -120,6 +136,13 @@ export default function LiveRecordingPage() {
                   <p className="text-sm text-muted-foreground">Save your recordings and transcriptions to the cloud for easy access and backup</p>
                 </div>
               </div>
+              <div className="flex items-start gap-3">
+                <RotateCcw className="h-5 w-5 mt-1" />
+                <div>
+                  <h4 className="font-semibold">Mode Switching</h4>
+                  <p className="text-sm text-muted-foreground">Switch between transcription and notes mode to optimize for your content type</p>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -144,12 +167,12 @@ export default function LiveRecordingPage() {
                   </ul>
                 </div>
                 <div>
-                  <h5 className="font-semibold mb-2">Recording Quality</h5>
+                  <h5 className="font-semibold mb-2">Device Audio Recording</h5>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• High-quality audio capture</li>
-                    <li>• Background noise reduction</li>
-                    <li>• Professional audio processing</li>
-                    <li>• Multiple format support</li>
+                    <li>• Capture system audio output</li>
+                    <li>• Perfect for online meetings</li>
+                    <li>• Combines with microphone input</li>
+                    <li>• Browser-based implementation</li>
                   </ul>
                 </div>
               </div>
@@ -158,16 +181,16 @@ export default function LiveRecordingPage() {
               <h4 className="font-semibold mb-3">Processing Options</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h5 className="font-semibold mb-2">Speaker Detection</h5>
+                  <h5 className="font-semibold mb-2">Transcription Mode</h5>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Enable/disable speaker identification</li>
+                    <li>• Speaker diarization included</li>
                     <li>• Support for multiple speakers</li>
                     <li>• Automatic speaker labeling</li>
-                    <li>• Custom speaker names</li>
+                    <li>• Higher cost per minute</li>
                   </ul>
                 </div>
                 <div>
-                  <h5 className="font-semibold mb-2">Note-taking Mode</h5>
+                  <h5 className="font-semibold mb-2">Notes Mode</h5>
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• Simplified transcription</li>
                     <li>• No speaker labels</li>
@@ -223,8 +246,8 @@ export default function LiveRecordingPage() {
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• PDF with timestamps and speaker labels</li>
                 <li>• Plain text for easy copying</li>
-                <li>• JSON with detailed metadata</li>
-                <li>• Audio file download (WAV format)</li>
+                <li>• Copy to clipboard functionality</li>
+                <li>• Summary generation</li>
               </ul>
             </div>
             <div>
@@ -253,24 +276,27 @@ export default function LiveRecordingPage() {
                 <li>• Minimize background noise and echo</li>
                 <li>• Ensure stable internet connection for processing</li>
                 <li>• Test your microphone before important recordings</li>
+                <li>• Enable device audio recording for online meetings</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-2">Getting Better Results</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Enable speaker identification for multi-speaker content</li>
-                <li>• Use note-taking mode for single-speaker recordings</li>
+                <li>• Use transcription mode for multi-speaker content</li>
+                <li>• Use notes mode for single-speaker recordings</li>
                 <li>• Generate summaries for long recordings</li>
                 <li>• Save important recordings to cloud storage</li>
+                <li>• Switch modes based on your content type</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-2">Managing Costs</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Check cost estimates before processing</li>
-                <li>• Use note-taking mode to reduce costs</li>
+                <li>• Use notes mode to reduce costs for single speakers</li>
                 <li>• Enable auto-download to avoid re-processing</li>
                 <li>• Review your usage patterns regularly</li>
+                <li>• Monitor your credit balance</li>
               </ul>
             </div>
           </div>

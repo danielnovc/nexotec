@@ -1,3 +1,6 @@
+"use client"
+
+import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Shield, Lock, Key, Server, Smartphone, Globe, Database, FileText, CheckCircle, AlertTriangle } from "lucide-react"
@@ -38,7 +41,7 @@ export default function EncryptionPage() {
               Encryption at Rest
             </CardTitle>
             <CardDescription>
-              All sensitive data is encrypted before storage using AES-GCM 256-bit encryption
+              All sensitive data is encrypted before storage using industry-standard encryption algorithms
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -51,15 +54,15 @@ export default function EncryptionPage() {
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    AES-GCM 256-bit encryption
+                    Advanced encryption standards
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    PBKDF2 key derivation (100,000 iterations)
+                    Secure key derivation
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    Unique salt and IV for each encryption
+                    Unique encryption per record
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
@@ -103,7 +106,7 @@ export default function EncryptionPage() {
               Encryption in Transit
             </CardTitle>
             <CardDescription>
-              TLS 1.3 encryption for all communications with secure cipher suites
+              TLS encryption for all communications with secure cipher suites
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -119,15 +122,15 @@ export default function EncryptionPage() {
                     <span className="text-sm">All API endpoints</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">RSA 4096-bit</Badge>
+                    <Badge variant="secondary">Strong Ciphers</Badge>
                     <span className="text-sm">Certificate keys</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">AES-GCM</Badge>
+                    <Badge variant="secondary">Secure Suites</Badge>
                     <span className="text-sm">Cipher suites</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">CHACHA20</Badge>
+                    <Badge variant="secondary">Modern Standards</Badge>
                     <span className="text-sm">Alternative ciphers</span>
                   </div>
                 </div>
@@ -176,165 +179,84 @@ export default function EncryptionPage() {
               <div className="text-center p-4 border rounded-lg">
                 <h4 className="font-semibold mb-2">Main Backend</h4>
                 <div className="space-y-1 text-sm">
-                  <div>✅ cert.pem</div>
-                  <div>✅ key.pem</div>
-                  <div>✅ chain.pem</div>
+                  <div>✅ Valid Certificate</div>
+                  <div>✅ Private Key</div>
+                  <div>✅ Certificate Chain</div>
                 </div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <h4 className="font-semibold mb-2">Notes Service</h4>
                 <div className="space-y-1 text-sm">
-                  <div>✅ cert.pem</div>
-                  <div>✅ key.pem</div>
-                  <div>✅ fullchain.pem</div>
+                  <div>✅ Valid Certificate</div>
+                  <div>✅ Private Key</div>
+                  <div>✅ Full Certificate Chain</div>
                 </div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <h4 className="font-semibold mb-2">Summary Service</h4>
                 <div className="space-y-1 text-sm">
-                  <div>✅ cert.pem</div>
-                  <div>✅ key.pem</div>
-                  <div>✅ chain.pem</div>
-                  <div>✅ fullchain.pem</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-              <h4 className="font-semibold mb-3">Certificate Specifications</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <strong>Algorithm:</strong> RSA 4096-bit<br/>
-                  <strong>Valid Period:</strong> 1 year<br/>
-                  <strong>Subject:</strong> transcrib.local<br/>
-                  <strong>Key Usage:</strong> Digital signature, Key encipherment
-                </div>
-                <div>
-                  <strong>Extended Key Usage:</strong> Server & Client auth<br/>
-                  <strong>SANs:</strong> localhost, *.transcrib.local<br/>
-                  <strong>Signature:</strong> SHA-256<br/>
-                  <strong>Compliance:</strong> TLS 1.3
+                  <div>✅ Valid Certificate</div>
+                  <div>✅ Private Key</div>
+                  <div>✅ Certificate Chain</div>
+                  <div>✅ Full Certificate Chain</div>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Security Headers */}
+        {/* Security Features */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-orange-600" />
-              Security Headers & Configuration
+              Additional Security Features
             </CardTitle>
             <CardDescription>
-              Comprehensive security headers and configurations protecting your application
+              Comprehensive security measures beyond encryption
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h3 className="font-semibold">HTTP Security Headers</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">HSTS</Badge>
-                    <span>Strict-Transport-Security: max-age=31536000</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">CSP</Badge>
-                    <span>Content-Security-Policy</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">X-Frame-Options</Badge>
-                    <span>DENY</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">X-Content-Type-Options</Badge>
-                    <span>nosniff</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">Referrer-Policy</Badge>
-                    <span>strict-origin-when-cross-origin</span>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <h3 className="font-semibold">CORS Configuration</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-3 w-3 text-green-600" />
-                    Allowed origins: nexogen.app, localhost
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-3 w-3 text-green-600" />
-                    Credentials: true
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-3 w-3 text-green-600" />
-                    Methods: GET, POST, PUT, DELETE, OPTIONS
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-3 w-3 text-green-600" />
-                    Headers: Content-Type, Authorization, X-Request-ID
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Input Validation */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              Input Validation & Security
-            </CardTitle>
-            <CardDescription>
-              Comprehensive input validation and security measures
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h3 className="font-semibold">Audio File Validation</h3>
+                <h3 className="font-semibold">Access Control</h3>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    Maximum file size: 100MB
+                    Multi-factor authentication
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    Maximum duration: 1 hour
+                    Role-based access control
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    Allowed formats: WAV, MP3, M4A, FLAC, OGG, WEBM
+                    Session management
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    Base64 validation
+                    IP whitelisting support
                   </li>
                 </ul>
               </div>
               <div className="space-y-4">
-                <h3 className="font-semibold">Text Input Validation</h3>
+                <h3 className="font-semibold">Data Protection</h3>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    Maximum length: 100KB
+                    Automatic data retention policies
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    XSS protection
+                    Secure data deletion
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    Script injection prevention
+                    Audit logging
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    Rate limiting: 100 requests/hour
+                    GDPR compliance
                   </li>
                 </ul>
               </div>
@@ -346,63 +268,78 @@ export default function EncryptionPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-blue-600" />
-              Compliance & Standards
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Compliance & Certifications
             </CardTitle>
             <CardDescription>
-              Meeting industry security standards and compliance requirements
+              Meeting industry standards and regulatory requirements
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2">TLS 1.3</h4>
-                <p className="text-sm text-muted-foreground">Latest TLS standard with perfect forward secrecy</p>
+                <h4 className="font-semibold mb-2">GDPR</h4>
+                <p className="text-sm text-muted-foreground">Full compliance with EU data protection regulations</p>
               </div>
               <div className="text-center p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2">AES-GCM</h4>
-                <p className="text-sm text-muted-foreground">Authenticated encryption with 256-bit keys</p>
+                <h4 className="font-semibold mb-2">HIPAA</h4>
+                <p className="text-sm text-muted-foreground">Healthcare data protection standards</p>
               </div>
               <div className="text-center p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2">PBKDF2</h4>
-                <p className="text-sm text-muted-foreground">100,000 iterations for key derivation</p>
+                <h4 className="font-semibold mb-2">SOC 2</h4>
+                <p className="text-sm text-muted-foreground">Security and availability controls</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Best Practices */}
+        {/* Security Best Practices */}
         <Card>
           <CardHeader>
-            <CardTitle>Security Best Practices</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              Security Best Practices
+            </CardTitle>
             <CardDescription>
-              How we maintain the highest security standards
+              Recommendations for maintaining security
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-semibold mb-3">For Users</h4>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li>• Use strong, unique passwords</li>
-                    <li>• Enable two-factor authentication when available</li>
-                    <li>• Keep your encryption keys secure</li>
-                    <li>• Regularly update your applications</li>
-                    <li>• Use HTTPS connections only</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-3">For Developers</h4>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li>• All data encrypted before storage</li>
-                    <li>• TLS 1.3 for all communications</li>
-                    <li>• Input validation on all endpoints</li>
-                    <li>• Rate limiting to prevent abuse</li>
-                    <li>• Regular security audits</li>
-                  </ul>
-                </div>
+              <div>
+                <h4 className="font-semibold mb-2">For Users</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Enable two-factor authentication</li>
+                  <li>• Use strong, unique passwords</li>
+                  <li>• Keep your devices updated</li>
+                  <li>• Be cautious with sensitive data</li>
+                </ul>
               </div>
+              <div>
+                <h4 className="font-semibold mb-2">For Organizations</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Implement access controls</li>
+                  <li>• Regular security audits</li>
+                  <li>• Employee security training</li>
+                  <li>• Incident response planning</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contact */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Security Questions?</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              If you have questions about our security measures or need additional information, please contact our security team.
+            </p>
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span className="text-sm">support@nexogen.app</span>
             </div>
           </CardContent>
         </Card>

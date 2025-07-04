@@ -2,18 +2,18 @@
 
 import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, Edit, Save, Download, Clock, Users, Zap, Shield, Database, CreditCard } from "lucide-react"
+import { FileText, Edit, Save, Download, Clock, Users, Zap, Shield, Database, CreditCard, RotateCcw } from "lucide-react"
 
 export default function NoteTakingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-4">Note-taking Mode</h2>
+        <h2 className="text-2xl font-bold mb-4">Notes Mode</h2>
         <p className="text-muted-foreground mb-6">
           Last updated: {new Date().toLocaleDateString()}
         </p>
         <p className="text-muted-foreground mb-6">
-          Note-taking Mode is a streamlined transcription feature perfect for single-speaker recordings where you don't need speaker identification. Get faster processing, lower costs, and clean text output ideal for lectures, podcasts, personal notes, and solo presentations.
+          Notes Mode is a streamlined transcription feature perfect for single-speaker recordings where you don't need speaker identification. Get faster processing, lower costs, and clean text output ideal for lectures, podcasts, personal notes, and solo presentations.
         </p>
       </div>
 
@@ -21,7 +21,7 @@ export default function NoteTakingPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            How Note-taking Mode Works
+            How Notes Mode Works
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -31,8 +31,8 @@ export default function NoteTakingPage() {
                 <span className="text-sm font-semibold">1</span>
               </div>
               <div>
-                <h4 className="font-semibold">Enable Note-taking Mode</h4>
-                <p className="text-sm text-muted-foreground">Toggle the "Take Notes" option in your recording settings to activate this simplified mode.</p>
+                <h4 className="font-semibold">Switch to Notes Mode</h4>
+                <p className="text-sm text-muted-foreground">Use the toggle in the sidebar to switch to <b>Notes Mode</b>. This mode is optimized for single-speaker content.</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -41,7 +41,7 @@ export default function NoteTakingPage() {
               </div>
               <div>
                 <h4 className="font-semibold">Simplified Processing</h4>
-                <p className="text-sm text-muted-foreground">Your audio is processed without speaker identification, resulting in faster processing times.</p>
+                <p className="text-sm text-muted-foreground">Your audio is processed without speaker identification, resulting in faster processing times and lower costs.</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -58,8 +58,8 @@ export default function NoteTakingPage() {
                 <span className="text-sm font-semibold">4</span>
               </div>
               <div>
-                <h4 className="font-semibold">Save & Export</h4>
-                <p className="text-sm text-muted-foreground">Save your notes to cloud storage with optional encryption, or export in various formats for further editing.</p>
+                <h4 className="font-semibold">Export & Share</h4>
+                <p className="text-sm text-muted-foreground">Export as PDF, copy to clipboard, or generate summaries for further use and sharing.</p>
               </div>
             </div>
           </div>
@@ -116,8 +116,8 @@ export default function NoteTakingPage() {
               <div className="flex items-start gap-3">
                 <Download className="h-5 w-5 mt-1" />
                 <div>
-                  <h4 className="font-semibold">Multiple Formats</h4>
-                  <p className="text-sm text-muted-foreground">Export as PDF, TXT, JSON, or copy to clipboard</p>
+                  <h4 className="font-semibold">Export Options</h4>
+                  <p className="text-sm text-muted-foreground">Export as PDF or copy to clipboard for easy sharing</p>
                 </div>
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function NoteTakingPage() {
                 <li>• No speaker labels or interruptions</li>
                 <li>• Clean paragraph formatting</li>
                 <li>• Preserved punctuation and structure</li>
-                <li>• Detailed metadata available</li>
+                <li>• Easy to read and edit</li>
               </ul>
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function NoteTakingPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Cost Comparison</CardTitle>
+          <CardTitle>Mode Comparison</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -203,7 +203,7 @@ export default function NoteTakingPage() {
               <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
                 <FileText className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold mb-2">Note-taking Mode</h3>
+              <h3 className="font-semibold mb-2">Notes Mode</h3>
               <p className="text-sm text-muted-foreground mb-2">Simplified processing</p>
               <p className="text-lg font-bold">Lower Cost</p>
               <p className="text-xs text-muted-foreground">Faster processing time</p>
@@ -212,7 +212,7 @@ export default function NoteTakingPage() {
               <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
                 <Users className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold mb-2">Full Speaker ID</h3>
+              <h3 className="font-semibold mb-2">Transcription Mode</h3>
               <p className="text-sm text-muted-foreground mb-2">Complete processing</p>
               <p className="text-lg font-bold">Higher Cost</p>
               <p className="text-xs text-muted-foreground">Includes speaker detection</p>
@@ -259,7 +259,7 @@ export default function NoteTakingPage() {
         <CardContent>
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">When to Use Note-taking Mode</h4>
+              <h4 className="font-semibold mb-2">When to Use Notes Mode</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Single-speaker recordings (lectures, podcasts, presentations)</li>
                 <li>• Content where speaker identification isn't important</li>
@@ -281,7 +281,7 @@ export default function NoteTakingPage() {
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Copy transcriptions to note-taking apps</li>
                 <li>• Use for content creation and editing</li>
-                <li>• Integrate with document management systems</li>
+                <li>• Generate summaries for key points</li>
                 <li>• Share transcripts for accessibility compliance</li>
               </ul>
             </div>

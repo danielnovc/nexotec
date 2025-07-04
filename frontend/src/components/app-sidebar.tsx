@@ -37,6 +37,8 @@ import {
   Plus,
   HelpCircle,
   Monitor,
+  Globe,
+  FileEdit,
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
@@ -58,6 +60,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { useEffect, useState } from "react"
 import { isEnterpriseAdmin } from "@/lib/enterprise-api"
@@ -66,6 +75,7 @@ import { motion } from "framer-motion"
 import { useDashboard } from "@/app/dashboard/layout"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { CreditTopUpModal } from "@/components/credit-topup-modal"
+import { useI18n, locales } from "@/lib/i18n"
 
 const data = {
   user: {
@@ -190,63 +200,48 @@ const data = {
 }
 
 // Navigation items without dropdown structure
-const getNavigationItems = (hasEnterprise: boolean, pathname: string) => [
+const getNavigationItems = (hasEnterprise: boolean, pathname: string, t: (key: string) => string) => [
   {
-    title: "Audio Transcription",
-    url: "/dashboard",
-    icon: Mic,
-    isActive: pathname === "/dashboard",
-  },
-  {
-    title: "Transcription History",
-    url: "/dashboard/transcriptions",
-    icon: FileText,
-    isActive: pathname === "/dashboard/transcriptions",
-  },
-  {
-    title: "Notes History",
-    url: "/dashboard/notes",
-    icon: BookOpen,
-    isActive: pathname === "/dashboard/notes",
-  },
-  {
-    title: "Analytics",
-    url: "/dashboard/analytics",
+    title: t('dashboard'),
+    url: '/dashboard',
     icon: BarChart3,
-    isActive: pathname === "/dashboard/analytics",
+    isActive: pathname === '/dashboard'
   },
   {
-    title: "Documentation",
-    url: "/documentation",
-    icon: HelpCircle,
-    isActive: pathname.startsWith("/documentation"),
+    title: t('transcriptions'),
+    url: '/dashboard/transcriptions',
+    icon: FileText,
+    isActive: pathname === '/dashboard/transcriptions'
+  },
+  {
+    title: t('notes'),
+    url: '/dashboard/notes',
+    icon: FileEdit,
+    isActive: pathname === '/dashboard/notes'
+  },
+  {
+    title: t('billing'),
+    url: '/dashboard/billing',
+    icon: CreditCard,
+    isActive: pathname === '/dashboard/billing'
+  },
+  {
+            title: t('settings.title'),
+    url: '/dashboard/settings',
+    icon: Settings,
+    isActive: pathname === '/dashboard/settings'
   },
   ...(hasEnterprise ? [{
-    title: "Enterprise",
-    url: "/dashboard/enterprise",
+    title: t('enterprise'),
+    url: '/dashboard/enterprise',
     icon: Users,
-    isActive: pathname === "/dashboard/enterprise",
-  }] : []),
+    isActive: pathname === '/dashboard/enterprise'
+  }] : [])
 ]
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   isDark: boolean;
   onThemeToggle: () => void;
-  autoDownloadRecordings: boolean;
-  onAutoDownloadRecordingsChange: (checked: boolean) => void;
-  saveTranscripts: boolean;
-  onSaveTranscriptsChange: (checked: boolean) => void;
-  autoDownloadTranscripts: boolean;
-  onAutoDownloadTranscriptsChange: (checked: boolean) => void;
-  autoSummarize: boolean;
-  onAutoSummarizeChange: (checked: boolean) => void;
-  moreThanTwoSpeakers: boolean;
-  onMoreThanTwoSpeakersChange: (checked: boolean) => void;
-  saveAudioToStorage: boolean;
-  onSaveAudioToStorageChange: (checked: boolean) => void;
-  recordDeviceAudio: boolean;
-  onRecordDeviceAudioChange: (checked: boolean) => void;
-  onOpenSupabaseModal: () => void;
   credits?: number;
   creditsLoading?: boolean;
   takeNotes?: boolean;
@@ -263,21 +258,6 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 export function AppSidebar({ 
   isDark, 
   onThemeToggle,
-  autoDownloadRecordings,
-  onAutoDownloadRecordingsChange,
-  saveTranscripts,
-  onSaveTranscriptsChange,
-  autoDownloadTranscripts,
-  onAutoDownloadTranscriptsChange,
-  autoSummarize,
-  onAutoSummarizeChange,
-  moreThanTwoSpeakers,
-  onMoreThanTwoSpeakersChange,
-  saveAudioToStorage,
-  onSaveAudioToStorageChange,
-  recordDeviceAudio,
-  onRecordDeviceAudioChange,
-  onOpenSupabaseModal,
   credits,
   creditsLoading,
   takeNotes,
@@ -287,19 +267,20 @@ export function AppSidebar({
   hasEnterprise,
   ...props 
 }: AppSidebarProps) {
+  const { t, locale, setLocale } = useI18n()
   const pathname = usePathname()
   const { setMobileSidebarOpen } = useDashboard()
 
-  const navigationItems = getNavigationItems(hasEnterprise, pathname)
+  const navigationItems = getNavigationItems(hasEnterprise, pathname, t)
 
   // For mobile, we'll render the sidebar content directly without the Sheet wrapper
   const sidebarContent = (
     <div className="flex h-full w-full flex-col overflow-y-auto">
       <SidebarHeader>
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <img src="/icon.png" alt="Transcrib" className="w-8 h-8" />
-            <h2 className="text-sidebar-foreground font-medium">Nexogen AI</h2>
+        <div className="flex items-center justify-between gap-2 mb-4 px-2 pt-2 w-full">
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <img src="/icon.png" alt="Nexogen AI" className="w-8 h-8" />
+            <h2 className="text-sidebar-foreground font-medium">{t('appName')}</h2>
           </div>
           
           <div className="flex items-center gap-2">
@@ -313,6 +294,27 @@ export function AppSidebar({
               <X className="h-4 w-4" />
             </Button>
             
+            {/* Language Switcher */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Select value={locale} onValueChange={setLocale}>
+                  <SelectTrigger className="h-8 w-8 p-0 border-none bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <Globe className="h-4 w-4" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[9999]">
+                    {locales.map((lang: string) => (
+                      <SelectItem key={lang} value={lang}>
+                        {t(lang === 'en' ? 'english' : lang === 'de' ? 'german' : lang === 'es' ? 'spanish' : lang === 'fr' ? 'french' : lang === 'ru' ? 'russian' : lang === 'ua' ? 'ukrainian' : lang === 'lt' ? 'lithuanian' : lang === 'pl' ? 'polish' : lang)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={8} className="z-[9999]">
+                <p>{t('language')}</p>
+              </TooltipContent>
+            </Tooltip>
+
             {/* Theme Toggle Button */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -320,7 +322,7 @@ export function AppSidebar({
                   variant="ghost"
                   size="sm"
                   onClick={onThemeToggle}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 hidden lg:flex"
                 >
                   {isDark ? (
                     <Sun className="h-4 w-4" />
@@ -329,20 +331,20 @@ export function AppSidebar({
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent sideOffset={8}>
-                <p>Toggle theme</p>
+              <TooltipContent sideOffset={8} className="z-[9999]">
+                <p>{t('toggleTheme')}</p>
               </TooltipContent>
             </Tooltip>
           </div>
         </div>
         
         {/* Credits Display */}
-        <div className="mx-2 mb-4">
+        <div className="mx-4 mb-4">
           <div className="bg-gray-100 dark:bg-gray-800 rounded-t-lg px-2 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-400">Credits</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-400">{t('credits')}</span>
               </div>
                           <div className="text-right">
               <div className="text-lg font-bold text-gray-900 dark:text-gray-300">
@@ -358,7 +360,7 @@ export function AppSidebar({
               className="w-full rounded-t-none border-t-0 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Top Up Credits
+              {t('topUpCredits')}
             </Button>
           </CreditTopUpModal>
         </div>
@@ -366,7 +368,7 @@ export function AppSidebar({
         {/* Transcription Mode Toggle */}
         {takeNotes !== undefined && onTakeNotesChange && (
           <motion.div 
-            className="px-2 mb-4"
+            className="px-4 mb-4"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
@@ -397,7 +399,7 @@ export function AppSidebar({
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {takeNotes ? "Notes Mode" : "Transcription Mode"}
+                      {takeNotes ? t('notesMode') : t('transcriptionMode')}
                     </motion.span>
                   </Button>
                 </motion.div>
@@ -405,8 +407,8 @@ export function AppSidebar({
               <TooltipContent sideOffset={8} className="max-w-[300px] z-[99999] relative">
                 <p>
                   {takeNotes 
-                    ? "Switch to Transcription Mode: Display as conversation with speaker labels" 
-                    : "Switch to Notes Mode: Display as continuous text for note-taking"
+                    ? t('switchToTranscriptionMode') 
+                    : t('switchToNotesMode')
                   }
                 </p>
               </TooltipContent>
@@ -417,7 +419,7 @@ export function AppSidebar({
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('navigation')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
@@ -433,154 +435,6 @@ export function AppSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {/* Tools Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Tools</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <div className="space-y-4 px-4">
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="auto-summarize" className="flex items-center gap-2 font-normal">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="font-normal">Auto-summarize</span>
-                </Label>
-                <Switch
-                  id="auto-summarize"
-                  checked={autoSummarize}
-                  onCheckedChange={onAutoSummarizeChange}
-                />
-              </div>
-
-              <div className="flex items-center justify-between space-x-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Label htmlFor="more-than-two-speakers" className="flex items-center gap-2 font-normal cursor-help">
-                      <Users className="h-4 w-4" />
-                      <span className="font-normal">More than 2 speakers</span>
-                    </Label>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8} className="max-w-[300px] z-[99999] relative">
-                    <p>Enable this if your audio contains more than two speakers. This helps improve speaker diarization accuracy by preventing the system from mistakenly adding extra speakers due to background noise or brief sound discrepancies.</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Switch
-                  id="more-than-two-speakers"
-                  checked={moreThanTwoSpeakers}
-                  onCheckedChange={onMoreThanTwoSpeakersChange}
-                  aria-label="Toggle more than two speakers mode"
-                />
-              </div>
-
-              <div className="flex items-center justify-between space-x-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Label htmlFor="record-device-audio" className="flex items-center gap-2 font-normal cursor-help">
-                      <Monitor className="h-4 w-4" />
-                      <span className="font-normal">Record device audio</span>
-                    </Label>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8} className="max-w-[300px] z-[99999] relative">
-                    <p>Enable this to record system audio (music, videos, calls) in addition to microphone input. This allows you to capture both your voice and the audio playing on your device.</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Switch
-                  id="record-device-audio"
-                  checked={recordDeviceAudio}
-                  onCheckedChange={onRecordDeviceAudioChange}
-                  aria-label="Toggle device audio recording"
-                />
-              </div>
-            </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Data Safety Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Data Safety</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <div className="space-y-4 px-4">
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="save-transcripts" className="flex items-center gap-2 font-normal">
-                  <Save className="h-4 w-4" />
-                  <span className="font-normal">Save transcripts</span>
-                </Label>
-                <Switch
-                  id="save-transcripts"
-                  checked={saveTranscripts}
-                  onCheckedChange={onSaveTranscriptsChange}
-                  aria-label="Toggle save transcripts"
-                />
-              </div>
-
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="save-audio-to-storage" className="flex items-center gap-2 font-normal">
-                  <Database className="h-4 w-4" />
-                  <span className="font-normal">Save audio to storage</span>
-                </Label>
-                <Switch
-                  id="save-audio-to-storage"
-                  checked={saveAudioToStorage}
-                  onCheckedChange={onSaveAudioToStorageChange}
-                  aria-label="Toggle save audio to storage"
-                />
-              </div>
-            </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Download Options Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Download Options</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <div className="space-y-4 px-4">
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="auto-download-recordings" className="flex items-center gap-2 font-normal">
-                  <Download className="h-4 w-4" />
-                  <span className="font-normal">Auto-download recordings</span>
-                </Label>
-                <Switch
-                  id="auto-download-recordings"
-                  checked={autoDownloadRecordings}
-                  onCheckedChange={onAutoDownloadRecordingsChange}
-                  aria-label="Toggle auto-download recordings"
-                />
-              </div>
-
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="auto-download-transcripts" className="flex items-center gap-2 font-normal">
-                  <FileText className="h-4 w-4" />
-                  <span className="font-normal">Auto-download transcripts</span>
-                </Label>
-                <Switch
-                  id="auto-download-transcripts"
-                  checked={autoDownloadTranscripts}
-                  onCheckedChange={onAutoDownloadTranscriptsChange}
-                  aria-label="Toggle auto-download transcripts"
-                />
-              </div>
-            </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Enterprise Section */}
-        {hasEnterprise && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Enterprise</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <div className="space-y-4 px-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onOpenSupabaseModal}
-                  className="w-full flex items-center gap-2"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Configure Storage</span>
-                </Button>
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
       <SidebarFooter>
         {user && (

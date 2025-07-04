@@ -28,6 +28,9 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useCredits } from "@/hooks/useCredits"
 import { toast } from "sonner"
 import { decryptTranscription } from "@/lib/encryption"
+import { TwoFactorAuthModal } from "@/components/two-factor-auth-modal"
+import { is2FAEnabled } from "@/lib/2fa-api"
+import { useI18n } from "@/lib/i18n"
 
 interface Transcription {
   id: string
@@ -53,20 +56,38 @@ export default function TranscriptionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [encryptionKey, setEncryptionKey] = useState("")
   const [expandedTranscription, setExpandedTranscription] = useState<string | null>(null)
+  const [show2FA, setShow2FA] = useState(false)
+  const [is2FAVerified, setIs2FAVerified] = useState(false)
+  const [verificationSuccessful, setVerificationSuccessful] = useState(false)
+  const { t } = useI18n()
 
   useEffect(() => {
-    // Get encryption key from session storage
-    const storedKey = sessionStorage.getItem('encryption_key')
+    // Get encryption key from localStorage (same as settings page)
+    const storedKey = localStorage.getItem('encryptionKey')
     if (storedKey) {
       setEncryptionKey(storedKey)
+    } else {
+      // Generate a new key if none exists
+      const { generateEncryptionKey } = require('@/lib/encryption')
+      const newKey = generateEncryptionKey()
+      localStorage.setItem('encryptionKey', newKey)
+      setEncryptionKey(newKey)
     }
   }, [])
 
   useEffect(() => {
-    if (user) {
-      loadTranscriptions()
+    const check2FAAndLoad = async () => {
+      if (user) {
+        if (!is2FAVerified) {
+          setShow2FA(true)
+        } else {
+          loadTranscriptions()
+        }
+      }
     }
-  }, [user, encryptionKey])
+    
+    check2FAAndLoad()
+  }, [user, encryptionKey, is2FAVerified])
 
   const loadTranscriptions = async () => {
     if (!user) return
@@ -90,7 +111,7 @@ export default function TranscriptionsPage() {
       })
 
       if (!response.ok) {
-        throw new Error(`Failed to load transcriptions: ${response.status}`)
+        throw new Error(`${t('failedToLoadTranscriptions')}: ${response.status}`)
       }
 
       const data = await response.json()
@@ -100,8 +121,8 @@ export default function TranscriptionsPage() {
       setTranscriptions(data.transcriptions || [])
     } catch (err) {
       console.error('Error loading transcriptions:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load transcriptions')
-      toast.error('Failed to load transcriptions')
+      setError(err instanceof Error ? err.message : t('failedToLoadTranscriptions'))
+      toast.error(t('failedToLoadTranscriptions'))
     } finally {
       setLoading(false)
     }
@@ -144,9 +165,9 @@ export default function TranscriptionsPage() {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      toast.success('Transcription copied to clipboard')
+      toast.success(t('transcriptionCopiedToClipboard'))
     } catch (err) {
-      toast.error('Failed to copy to clipboard')
+      toast.error(t('failedToCopyToClipboard'))
     }
   }
 
@@ -181,9 +202,9 @@ export default function TranscriptionsPage() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
       
-      toast.success(`Transcription downloaded as ${format.toUpperCase()}`)
+      toast.success(`${t('transcriptionDownloaded')} ${format.toUpperCase()}`)
     } catch (err) {
-      toast.error('Failed to download transcription')
+      toast.error(t('failedToDownloadTranscription'))
     }
   }
 
@@ -196,7 +217,7 @@ export default function TranscriptionsPage() {
   }
 
   const getTranscriptionText = (content: any) => {
-    if (!content) return 'No content available'
+    if (!content) return t('noContentAvailable')
     
     // Handle decrypted content structure
     if (Array.isArray(content)) {
@@ -220,11 +241,11 @@ export default function TranscriptionsPage() {
       return content
     }
     
-    return 'No content available'
+    return t('noContentAvailable')
   }
 
   const getFormattedTranscription = (content: any) => {
-    if (!content) return 'No content available'
+    if (!content) return t('noContentAvailable')
     
     if (Array.isArray(content)) {
       return content.map((item: any, index: number) => {
@@ -633,6 +654,28 @@ export default function TranscriptionsPage() {
           <p className="mt-1">Total transcriptions: {transcriptions.length}</p>
         </div>
       </div>
+
+      {/* 2FA Modal */}
+              <TwoFactorAuthModal
+          isOpen={show2FA}
+          onClose={() => {
+            setShow2FA(false)
+            // Only redirect if verification was not successful
+            if (!verificationSuccessful) {
+              window.location.href = '/dashboard'
+            }
+          }}
+          onSuccess={() => {
+            setIs2FAVerified(true)
+            setVerificationSuccessful(true)
+            setShow2FA(false)
+            // Load transcriptions after successful verification
+            loadTranscriptions()
+          }}
+          title={t('2fa.required')}
+          description={t('2fa.enterCodeToAccessTranscriptions')}
+          encryptionKey={encryptionKey}
+        />
     </div>
   )
 } 

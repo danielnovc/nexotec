@@ -19,7 +19,7 @@ export default function CookiePolicyPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            This Cookie Policy explains how Transcrib uses cookies and similar technologies to recognize you when you visit our website and use our services.
+            This Cookie Policy explains how Nexogen AI uses cookies and similar technologies to recognize you when you visit our website and use our services.
           </p>
           <p className="text-sm text-muted-foreground">
             By using our services, you consent to the use of cookies in accordance with this policy.
@@ -383,17 +383,17 @@ export default function CookiePolicyPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 className="font-semibold">Privacy Team</h4>
-                <p className="text-sm text-muted-foreground">privacy@transcrib.com</p>
+                <p className="text-sm text-muted-foreground">privacy@nexogen.com</p>
               </div>
               <div>
                 <h4 className="font-semibold">Data Protection Officer</h4>
-                <p className="text-sm text-muted-foreground">dpo@transcrib.com</p>
+                <p className="text-sm text-muted-foreground">dpo@nexogen.com</p>
               </div>
             </div>
             <div>
               <h4 className="font-semibold mb-2">Postal Address</h4>
               <p className="text-sm text-muted-foreground">
-                Transcrib<br />
+                Nexogen AI<br />
                 [Address Line 1]<br />
                 [Address Line 2]<br />
                 [City, State, ZIP]<br />

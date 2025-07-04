@@ -8,10 +8,19 @@ import { useCredits } from "@/hooks/useCredits"
 import { useAuth } from "@/contexts/AuthContext"
 import { SupabaseConnectModal } from "@/components/supabase-connect-modal"
 import { isEnterpriseAdmin, hasEnterpriseAccess } from "@/lib/enterprise-api"
-import { Menu, RotateCcw, Sun, Moon, X, CreditCard, Mic, FileText, BookOpen, BarChart3, Sparkles, Users, Save, Database, Download, Settings, HelpCircle, Plus, Monitor } from "lucide-react"
+import { useI18n, locales } from "@/lib/i18n"
+import { Menu, RotateCcw, Sun, Moon, X, CreditCard, Mic, FileText, BookOpen, BarChart3, Sparkles, Users, Save, Database, Download, Settings, HelpCircle, Plus, Monitor, Globe, FileEdit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import Link from "next/link"
 import { NavUser } from "@/components/nav-user"
 import { CreditTopUpModal } from "@/components/credit-topup-modal"
@@ -56,6 +65,7 @@ export default function DashboardLayout({
 }) {
   const { credits, loading: creditsLoading, refreshCredits } = useCredits()
   const { user } = useAuth()
+  const { t, locale, setLocale } = useI18n()
   
   // Theme toggle state
   const [isDark, setIsDark] = useState(false)
@@ -226,25 +236,10 @@ export default function DashboardLayout({
             
             {/* Desktop Sidebar */}
             <div className="hidden lg:block lg:relative z-[70] h-full">
-              <AppSidebar 
-                className="w-64 border-r h-full bg-white dark:bg-neutral-950" 
+              <AppSidebar
+                className="hidden lg:flex"
                 isDark={isDark}
                 onThemeToggle={toggleTheme}
-                autoDownloadRecordings={autoDownloadRecordings}
-                onAutoDownloadRecordingsChange={setAutoDownloadRecordings}
-                saveTranscripts={saveTranscripts}
-                onSaveTranscriptsChange={setSaveTranscripts}
-                autoDownloadTranscripts={autoDownloadTranscripts}
-                onAutoDownloadTranscriptsChange={setAutoDownloadTranscripts}
-                autoSummarize={autoSummarize}
-                onAutoSummarizeChange={setAutoSummarize}
-                moreThanTwoSpeakers={moreThanTwoSpeakers}
-                onMoreThanTwoSpeakersChange={setMoreThanTwoSpeakers}
-                saveAudioToStorage={saveAudioToStorage}
-                onSaveAudioToStorageChange={setSaveAudioToStorage}
-                recordDeviceAudio={recordDeviceAudio}
-                onRecordDeviceAudioChange={setRecordDeviceAudio}
-                onOpenSupabaseModal={() => setSupabaseModalOpen(true)}
                 credits={credits}
                 creditsLoading={creditsLoading}
                 takeNotes={takeNotes}
@@ -266,13 +261,34 @@ export default function DashboardLayout({
               <div className="flex flex-col h-full">
                 {/* Header */}
                 <div className="p-4 border-b border-gray-200 dark:border-neutral-800">
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="flex items-center gap-2">
-                      <img src="/icon.png" alt="Transcrib" className="w-8 h-8" />
-                      <h2 className="text-sidebar-foreground font-medium">Nexogen AI</h2>
+                  <div className="flex items-center justify-between gap-2 mb-4 px-2 pt-2 w-full">
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <img src="/icon.png" alt="Nexogen AI" className="w-8 h-8" />
+                      <h2 className="text-sidebar-foreground font-medium">{t('appName')}</h2>
                     </div>
                     
                     <div className="flex items-center gap-2">
+                      {/* Language Switcher */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Select value={locale} onValueChange={setLocale}>
+                            <SelectTrigger className="h-8 w-8 p-0 border-none bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800">
+                              <Globe className="h-4 w-4" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[9999]">
+                              {locales.map((lang: string) => (
+                                <SelectItem key={lang} value={lang}>
+                                  {t(lang === 'en' ? 'english' : lang === 'de' ? 'german' : lang === 'es' ? 'spanish' : lang === 'fr' ? 'french' : lang === 'ru' ? 'russian' : lang === 'ua' ? 'ukrainian' : lang === 'lt' ? 'lithuanian' : lang === 'pl' ? 'polish' : lang)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TooltipTrigger>
+                        <TooltipContent sideOffset={8} className="z-[9999]">
+                          <p>{t('language')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+
                       {/* Mobile close button */}
                       <Button
                         variant="ghost"
@@ -282,30 +298,16 @@ export default function DashboardLayout({
                       >
                         <X className="h-4 w-4" />
                       </Button>
-                      
-                      {/* Theme Toggle Button */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={toggleTheme}
-                        className="h-8 w-8 p-0"
-                      >
-                        {isDark ? (
-                          <Sun className="h-4 w-4" />
-                        ) : (
-                          <Moon className="h-4 w-4" />
-                        )}
-                      </Button>
                     </div>
                   </div>
                   
                   {/* Credits Display */}
-                  <div className="px-2 mb-4">
+                  <div className="px-4 mb-4">
                     <div className="bg-gray-100 dark:bg-gray-800 rounded-t-lg px-2 py-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <CreditCard className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-400">Credits</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-400">{t('credits')}</span>
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold text-gray-900 dark:text-gray-300">
@@ -321,7 +323,7 @@ export default function DashboardLayout({
                         className="w-full rounded-t-none border-t-0 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200"
                       >
                         <Plus className="h-4 w-4 mr-2" />
-                        Top Up Credits
+                        {t('topUpCredits')}
                       </Button>
                     </CreditTopUpModal>
                   </div>
@@ -329,164 +331,38 @@ export default function DashboardLayout({
                 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                  {/* Navigation */}
+                  {/* Navigation Section */}
                   <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-400 mb-3">Navigation</h3>
-                    <div className="space-y-1">
-                      <Link href="/dashboard" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-300">
-                        <Mic className="h-4 w-4" />
-                        <span>Audio Transcription</span>
-                      </Link>
-                      <Link href="/dashboard/transcriptions" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-300">
-                        <FileText className="h-4 w-4" />
-                        <span>Transcription History</span>
-                      </Link>
-                      <Link href="/dashboard/notes" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-300">
-                        <BookOpen className="h-4 w-4" />
-                        <span>Notes History</span>
-                      </Link>
-                      <Link href="/dashboard/analytics" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-300">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-400 mb-3">{t('navigation')}</h3>
+                    <div className="space-y-2">
+                      <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
                         <BarChart3 className="h-4 w-4" />
-                        <span>Analytics</span>
+                        <span>{t('dashboard')}</span>
                       </Link>
-                      <Link href="/documentation" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-300">
-                        <HelpCircle className="h-4 w-4" />
-                        <span>Documentation</span>
+                      <Link href="/dashboard/transcriptions" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                        <FileText className="h-4 w-4" />
+                        <span>{t('transcriptions')}</span>
                       </Link>
-                      {hasEnterprise && (
-                        <Link href="/dashboard/enterprise" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-300">
+                      <Link href="/dashboard/notes" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                        <FileEdit className="h-4 w-4" />
+                        <span>{t('notes')}</span>
+                      </Link>
+                      <Link href="/dashboard/credits" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                        <CreditCard className="h-4 w-4" />
+                        <span>{t('credits')}</span>
+                      </Link>
+                      <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                        <Settings className="h-4 w-4" />
+                        <span>{t('settings.title')}</span>
+                      </Link>
+                      {isAdmin && hasEnterprise && (
+                        <Link href="/dashboard/enterprise" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
                           <Users className="h-4 w-4" />
-                          <span>Enterprise</span>
+                          <span>{t('enterprise')}</span>
                         </Link>
                       )}
                     </div>
                   </div>
-
-                  {/* Tools Section */}
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-400 mb-3">Tools</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label htmlFor="mobile-auto-summarize" className="flex items-center gap-2 font-normal">
-                          <Sparkles className="h-4 w-4" />
-                          <span className="font-normal">Auto-summarize</span>
-                        </Label>
-                        <Switch
-                          id="mobile-auto-summarize"
-                          checked={autoSummarize}
-                          onCheckedChange={setAutoSummarize}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label htmlFor="mobile-more-than-two-speakers" className="flex items-center gap-2 font-normal cursor-help">
-                          <Users className="h-4 w-4" />
-                          <span className="font-normal">More than 2 speakers</span>
-                        </Label>
-                        <Switch
-                          id="mobile-more-than-two-speakers"
-                          checked={moreThanTwoSpeakers}
-                          onCheckedChange={setMoreThanTwoSpeakers}
-                          aria-label="Toggle more than two speakers mode"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label htmlFor="mobile-record-device-audio" className="flex items-center gap-2 font-normal cursor-help">
-                          <Monitor className="h-4 w-4" />
-                          <span className="font-normal">Record device audio</span>
-                        </Label>
-                        <Switch
-                          id="mobile-record-device-audio"
-                          checked={recordDeviceAudio}
-                          onCheckedChange={setRecordDeviceAudio}
-                          aria-label="Toggle device audio recording"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Data Safety Section */}
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-400 mb-3">Data Safety</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label htmlFor="mobile-save-transcripts" className="flex items-center gap-2 font-normal">
-                          <Save className="h-4 w-4" />
-                          <span className="font-normal">Save transcripts</span>
-                        </Label>
-                        <Switch
-                          id="mobile-save-transcripts"
-                          checked={saveTranscripts}
-                          onCheckedChange={setSaveTranscripts}
-                          aria-label="Toggle save transcripts"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label htmlFor="mobile-save-audio-to-storage" className="flex items-center gap-2 font-normal">
-                          <Database className="h-4 w-4" />
-                          <span className="font-normal">Save audio to storage</span>
-                        </Label>
-                        <Switch
-                          id="mobile-save-audio-to-storage"
-                          checked={saveAudioToStorage}
-                          onCheckedChange={setSaveAudioToStorage}
-                          aria-label="Toggle save audio to storage"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Download Options Section */}
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-400 mb-3">Download Options</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label htmlFor="mobile-auto-download-recordings" className="flex items-center gap-2 font-normal">
-                          <Download className="h-4 w-4" />
-                          <span className="font-normal">Auto-download recordings</span>
-                        </Label>
-                        <Switch
-                          id="mobile-auto-download-recordings"
-                          checked={autoDownloadRecordings}
-                          onCheckedChange={setAutoDownloadRecordings}
-                          aria-label="Toggle auto-download recordings"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label htmlFor="mobile-auto-download-transcripts" className="flex items-center gap-2 font-normal">
-                          <FileText className="h-4 w-4" />
-                          <span className="font-normal">Auto-download transcripts</span>
-                        </Label>
-                        <Switch
-                          id="mobile-auto-download-transcripts"
-                          checked={autoDownloadTranscripts}
-                          onCheckedChange={setAutoDownloadTranscripts}
-                          aria-label="Toggle auto-download transcripts"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Enterprise Section */}
-                  {hasEnterprise && (
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-400 mb-3">Enterprise</h3>
-                      <div className="space-y-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSupabaseModalOpen(true)}
-                          className="w-full flex items-center gap-2"
-                        >
-                          <Settings className="h-4 w-4" />
-                          <span>Configure Storage</span>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 
                 {/* Footer */}
@@ -524,7 +400,7 @@ export default function DashboardLayout({
                   >
                     <RotateCcw className={`h-4 w-4 mr-2 transition-transform duration-300 ${takeNotes ? 'rotate-180' : ''}`} />
                     <span className="text-sm font-medium">
-                      {takeNotes ? "Notes" : "Transcription"}
+                      {takeNotes ? t('notes') : t('transcription')}
                     </span>
                   </Button>
                 )}

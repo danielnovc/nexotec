@@ -303,7 +303,7 @@ export default function GDPRCompliancePage() {
                     <li>• Dedicated DPO for compliance oversight</li>
                     <li>• Independent reporting structure</li>
                     <li>• Regular compliance assessments</li>
-                    <li>• Contact: dpo@nexogen.ai</li>
+                    <li>• Contact: support@nexogen.app</li>
                   </ul>
                 </div>
                 <div className="space-y-3">
@@ -393,12 +393,12 @@ export default function GDPRCompliancePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 className="font-semibold">Data Protection Officer</h4>
-                <p className="text-sm text-muted-foreground">dpo@nexogen.ai</p>
+                <p className="text-sm text-muted-foreground">support@nexogen.app</p>
               </div>
-              <div>
-                <h4 className="font-semibold">Privacy Team</h4>
-                <p className="text-sm text-muted-foreground">privacy@nexogen.ai</p>
-              </div>
+                              <div>
+                  <h4 className="font-semibold">Privacy Team</h4>
+                  <p className="text-sm text-muted-foreground">support@nexogen.app</p>
+                </div>
             </div>
             <div>
               <h4 className="font-semibold mb-2">Supervisory Authority</h4>

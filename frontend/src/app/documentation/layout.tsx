@@ -245,7 +245,7 @@ export default function DocumentationLayout({
         <Sidebar>
           <SidebarHeader>
             <div className="flex items-center gap-2 mb-4">
-              <img src="/icon.png" alt="Transcrib" className="w-8 h-8" />
+              <img src="/icon.png" alt="Nexogen AI" className="w-8 h-8" />
               <h2 className="text-sidebar-foreground font-medium">Nexogen AI</h2>
             </div>
             <SearchForm />

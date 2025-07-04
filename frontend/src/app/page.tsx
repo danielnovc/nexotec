@@ -9,7 +9,7 @@ export default function HomePage() {
       {/* Structured Data for SEO */}
       <StructuredData
         lang="en-US"
-        title="Transcrib - AI Transcription Service"
+        title="Nexogen AI - AI Transcription Service"
         description="Professional audio transcription with speaker diarization and secure note-taking for professionals"
         url="https://nexogen.app"
         region="US"

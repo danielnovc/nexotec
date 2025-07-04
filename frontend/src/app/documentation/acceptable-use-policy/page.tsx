@@ -19,7 +19,7 @@ export default function AcceptableUsePolicyPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            This Acceptable Use Policy (AUP) outlines the rules and guidelines for using Transcrib's services. By using our services, you agree to comply with this policy.
+            This Acceptable Use Policy (AUP) outlines the rules and guidelines for using Nexogen AI's services. By using our services, you agree to comply with this policy.
           </p>
           <p className="text-sm text-muted-foreground">
             Violation of this policy may result in suspension or termination of your account and access to our services.
@@ -274,7 +274,7 @@ export default function AcceptableUsePolicyPage() {
             <div>
               <h4 className="font-semibold mb-2">How to Report</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Email: abuse@transcrib.com</li>
+                                    <li>• Email: abuse@nexogen.com</li>
                 <li>• In-app reporting feature</li>
                 <li>• Support ticket system</li>
                 <li>• Emergency contact for urgent matters</li>
@@ -346,11 +346,11 @@ export default function AcceptableUsePolicyPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 className="font-semibold">Abuse Reports</h4>
-                <p className="text-sm text-muted-foreground">abuse@transcrib.com</p>
+                <p className="text-sm text-muted-foreground">abuse@nexogen.com</p>
               </div>
               <div>
                 <h4 className="font-semibold">Legal Team</h4>
-                <p className="text-sm text-muted-foreground">legal@transcrib.com</p>
+                <p className="text-sm text-muted-foreground">legal@nexogen.com</p>
               </div>
             </div>
             <div>
@@ -362,7 +362,7 @@ export default function AcceptableUsePolicyPage() {
             <div>
               <h4 className="font-semibold mb-2">Postal Address</h4>
               <p className="text-sm text-muted-foreground">
-                Transcrib<br />
+                Nexogen AI<br />
                 [Address Line 1]<br />
                 [Address Line 2]<br />
                 [City, State, ZIP]<br />

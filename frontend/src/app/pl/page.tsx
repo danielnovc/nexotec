@@ -130,7 +130,7 @@ export default function PolishLandingPage() {
       {/* Structured Data for SEO */}
       <StructuredData
         lang="pl-PL"
-        title="Transcrib - Bezpieczna Transkrypcja AI dla Profesjonalistów"
+        title="Nexogen AI - Bezpieczna Transkrypcja AI dla Profesjonalistów"
         description="Profesjonalna transkrypcja audio z rozpoznawaniem głosu i bezpieczne notatki"
         url="https://nexogen.app/pl"
         region="PL"
@@ -141,7 +141,7 @@ export default function PolishLandingPage() {
         isDark={isDark} 
         toggleTheme={toggleTheme} 
         scrollY={scrollY} 
-        currentLang="pl"
+
       />
 
       {/* Hero Section */}

@@ -130,7 +130,7 @@ export default function PortugueseLandingPage() {
       {/* Structured Data for SEO */}
       <StructuredData
         lang="pt-BR"
-        title="Transcrib - Transcrição IA Segura para Profissionais"
+        title="Nexogen AI - Transcrição IA Segura para Profissionais"
         description="Transcrição de áudio profissional com reconhecimento de voz e notas seguras"
         url="https://nexogen.app/pr"
         region="BR"
